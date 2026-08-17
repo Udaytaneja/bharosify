@@ -11,17 +11,17 @@ password_hash = PasswordHash.recommended()
 
 
 def hash_password(password: str) -> str:
-    """Hash a plain-text password using the recommended password hasher."""
+    """Hash a plain-text password."""
     return password_hash.hash(password)
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    """Verify a plain-text password against its stored hash."""
+    """Verify a password against its stored hash."""
     return password_hash.verify(password, hashed_password)
 
 
 def create_access_token(subject: str | int) -> str:
-    """Create a short-lived JWT access token."""
+    """Create a short-lived access token."""
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.jwt_access_token_expire_minutes
     )
@@ -40,7 +40,7 @@ def create_access_token(subject: str | int) -> str:
 
 
 def create_refresh_token(subject: str | int) -> str:
-    """Create a longer-lived JWT refresh token."""
+    """Create a longer-lived refresh token."""
     expire = datetime.now(timezone.utc) + timedelta(
         days=settings.jwt_refresh_token_expire_days
     )
