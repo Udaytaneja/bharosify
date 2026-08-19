@@ -9,7 +9,15 @@ from backend.app.models.base import Base
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True,
+    )
+
+    name: Mapped[str] = mapped_column(
+        String(255),
+        nullable=False,
+    )
 
     email: Mapped[str] = mapped_column(
         String(255),
@@ -23,9 +31,21 @@ class User(Base):
         nullable=False,
     )
 
-    full_name: Mapped[str | None] = mapped_column(
-        String(255),
+    phone: Mapped[str | None] = mapped_column(
+        String(30),
         nullable=True,
+    )
+
+    role: Mapped[str] = mapped_column(
+        String(20),
+        default="user",
+        nullable=False,
+    )
+
+    language: Mapped[str] = mapped_column(
+        String(5),
+        default="en",
+        nullable=False,
     )
 
     is_active: Mapped[bool] = mapped_column(

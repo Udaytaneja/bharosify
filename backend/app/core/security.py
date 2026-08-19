@@ -6,8 +6,9 @@ from pwdlib import PasswordHash
 
 from backend.app.core.config import settings
 
-
 password_hash = PasswordHash.recommended()
+
+REVOKED_TOKENS: set[str] = set()
 
 
 def hash_password(password: str) -> str:
@@ -60,8 +61,21 @@ def create_refresh_token(subject: str | int) -> str:
 
 def decode_token(token: str) -> dict[str, Any]:
     """Decode and validate a JWT token."""
+    if is_token_blacklisted(token):
+        raise jwt.PyJWTError("Token has been revoked")
+
     return jwt.decode(
         token,
         settings.jwt_secret,
         algorithms=[settings.jwt_algorithm],
     )
+
+
+def blacklist_token(token: str) -> None:
+    """Blacklist a token so it cannot be used again."""
+    REVOKED_TOKENS.add(token)
+
+
+def is_token_blacklisted(token: str) -> bool:
+    """Check if a token is in the blacklist."""
+    return token in REVOKED_TOKENS

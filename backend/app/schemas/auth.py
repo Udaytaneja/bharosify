@@ -20,6 +20,12 @@ class RegisterRequest(BaseModel):
     language: str = Field(default="en")
 
 
+class RefreshTokenRequest(BaseModel):
+    """Request payload for refreshing an access token."""
+
+    refresh_token: str
+
+
 class TokenResponse(BaseModel):
     """Authentication tokens returned after successful authentication."""
 
