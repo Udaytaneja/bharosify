@@ -167,6 +167,43 @@ export interface Underwriting {
   decision: 'approve' | 'review' | 'reject' | 'escalate'
 }
 
+export interface PaymentCreate {
+  amount: number
+  payment_reference: string
+  idempotency_key: string
+  transaction_id?: number | null
+  repayment_id?: number | null
+}
+
+export interface PaymentResponse {
+  id: number
+  user_id: number
+  amount: number
+  payment_reference: string
+  idempotency_key: string
+  status: string
+  reconciled: boolean
+  created_at: string
+}
+
+export interface AIRequest {
+  request_id: string
+  task: 'chat' | 'scenario' | 'risk_analysis' | 'underwriting'
+  input: string
+  language?: string
+  context?: Record<string, any>
+}
+
+export interface AIResponse {
+  request_id: string
+  response: string
+  confidence: number
+  reasoning_summary: string
+  evidence: any[]
+  recommendation: string
+  requires_human_review: boolean
+}
+
 export interface PaginatedResponse<T> {
   items: T[]
   total: number
@@ -181,3 +218,4 @@ export interface ApiError {
     details: any
   }
 }
+

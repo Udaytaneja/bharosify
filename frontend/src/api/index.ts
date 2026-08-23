@@ -8,7 +8,32 @@ import {
   Notification,
   RiskAssessment,
   FraudSignal,
+  Customer,
+  LoanApplication,
 } from '@/types'
+
+export * from './auth'
+export * from './financial'
+
+function normalizeList<T>(data: any, skip = 0, limit = 20): PaginatedResponse<T> {
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      total: data.length,
+      skip,
+      limit,
+    }
+  }
+  if (data && Array.isArray(data.items)) {
+    return data
+  }
+  return {
+    items: [],
+    total: 0,
+    skip,
+    limit,
+  }
+}
 
 export const financialApi = {
   getProfile: async () => {
@@ -21,20 +46,18 @@ export const financialApi = {
     return response.data
   },
 
-  getTransactions: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<Transaction>>(
-      '/transactions',
-      { params: { skip, limit } }
-    )
-    return response.data
+  getTransactions: async (skip = 0, limit = 20): Promise<PaginatedResponse<Transaction>> => {
+    const response = await apiClient.get<any>('/transactions', {
+      params: { offset: skip, limit },
+    })
+    return normalizeList<Transaction>(response.data, skip, limit)
   },
 
-  searchTransactions: async (query: string, skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<Transaction>>(
-      '/transactions',
-      { params: { q: query, skip, limit } }
-    )
-    return response.data
+  searchTransactions: async (query: string, skip = 0, limit = 20): Promise<PaginatedResponse<Transaction>> => {
+    const response = await apiClient.get<any>('/transactions', {
+      params: { q: query, offset: skip, limit },
+    })
+    return normalizeList<Transaction>(response.data, skip, limit)
   },
 }
 
@@ -51,12 +74,11 @@ export const trustApi = {
 }
 
 export const notificationApi = {
-  getNotifications: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<Notification>>(
-      '/notifications',
-      { params: { skip, limit } }
-    )
-    return response.data
+  getNotifications: async (skip = 0, limit = 20): Promise<PaginatedResponse<Notification>> => {
+    const response = await apiClient.get<any>('/notifications', {
+      params: { skip, limit },
+    })
+    return normalizeList<Notification>(response.data, skip, limit)
   },
 
   markAsRead: async (notificationId: string) => {
@@ -65,32 +87,32 @@ export const notificationApi = {
 }
 
 export const auditApi = {
-  getActivity: async (skip = 0, limit = 50) => {
-    const response = await apiClient.get('/audit/me', {
+  getActivity: async (skip = 0, limit = 50): Promise<PaginatedResponse<any>> => {
+    const response = await apiClient.get<any>('/audit/me', {
       params: { skip, limit }
     })
-    return response.data
+    return normalizeList<any>(response.data, skip, limit)
   },
 }
 
 export const bankerApi = {
-  getCustomers: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get('/bankers/customers', {
+  getCustomers: async (skip = 0, limit = 20): Promise<PaginatedResponse<Customer>> => {
+    const response = await apiClient.get<any>('/bankers/customers', {
       params: { skip, limit }
     })
+    return normalizeList<Customer>(response.data, skip, limit)
+  },
+
+  getCustomerDetail: async (customerId: string): Promise<Customer> => {
+    const response = await apiClient.get<Customer>(`/bankers/customers/${customerId}`)
     return response.data
   },
 
-  getCustomerDetail: async (customerId: string) => {
-    const response = await apiClient.get(`/bankers/customers/${customerId}`)
-    return response.data
-  },
-
-  getApplications: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get('/bankers/applications', {
+  getApplications: async (skip = 0, limit = 20): Promise<PaginatedResponse<LoanApplication>> => {
+    const response = await apiClient.get<any>('/bankers/applications', {
       params: { skip, limit }
     })
-    return response.data
+    return normalizeList<LoanApplication>(response.data, skip, limit)
   },
 }
 

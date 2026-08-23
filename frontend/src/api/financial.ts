@@ -5,20 +5,43 @@ import {
   Repayment,
   PaginatedResponse,
   Underwriting,
+  PaymentCreate,
+  PaymentResponse,
+  AIRequest,
+  AIResponse,
 } from '@/types'
 
+function normalizeList<T>(data: any, skip = 0, limit = 20): PaginatedResponse<T> {
+  if (Array.isArray(data)) {
+    return {
+      items: data,
+      total: data.length,
+      skip,
+      limit,
+    }
+  }
+  if (data && Array.isArray(data.items)) {
+    return data
+  }
+  return {
+    items: [],
+    total: 0,
+    skip,
+    limit,
+  }
+}
+
 export const applicationApi = {
-  create: async (data: any) => {
+  create: async (data: { amount: number; purpose: string; documents?: string[] }) => {
     const response = await apiClient.post<LoanApplication>('/applications', data)
     return response.data
   },
 
-  getAll: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<LoanApplication>>(
-      '/applications',
-      { params: { skip, limit } }
-    )
-    return response.data
+  getAll: async (skip = 0, limit = 20): Promise<PaginatedResponse<LoanApplication>> => {
+    const response = await apiClient.get<any>('/applications', {
+      params: { skip, limit },
+    })
+    return normalizeList<LoanApplication>(response.data, skip, limit)
   },
 
   getDetail: async (applicationId: string) => {
@@ -38,12 +61,11 @@ export const applicationApi = {
 }
 
 export const loanApi = {
-  getAll: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<Loan>>(
-      '/loans',
-      { params: { skip, limit } }
-    )
-    return response.data
+  getAll: async (skip = 0, limit = 20): Promise<PaginatedResponse<Loan>> => {
+    const response = await apiClient.get<any>('/loans', {
+      params: { skip, limit },
+    })
+    return normalizeList<Loan>(response.data, skip, limit)
   },
 
   getDetail: async (loanId: string) => {
@@ -53,19 +75,29 @@ export const loanApi = {
 }
 
 export const repaymentApi = {
-  getSchedule: async (skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<Repayment>>(
-      '/repayments',
-      { params: { skip, limit } }
-    )
+  getSchedule: async (skip = 0, limit = 20): Promise<PaginatedResponse<Repayment>> => {
+    const response = await apiClient.get<any>('/repayments', {
+      params: { skip, limit },
+    })
+    return normalizeList<Repayment>(response.data, skip, limit)
+  },
+
+  getLoanSchedule: async (loanId: string, skip = 0, limit = 20): Promise<PaginatedResponse<Repayment>> => {
+    const response = await apiClient.get<any>(`/repayments/${loanId}`, {
+      params: { skip, limit },
+    })
+    return normalizeList<Repayment>(response.data, skip, limit)
+  },
+}
+
+export const paymentApi = {
+  create: async (data: PaymentCreate): Promise<PaymentResponse> => {
+    const response = await apiClient.post<PaymentResponse>('/payments', data)
     return response.data
   },
 
-  getLoanSchedule: async (loanId: string, skip = 0, limit = 20) => {
-    const response = await apiClient.get<PaginatedResponse<Repayment>>(
-      `/repayments/${loanId}`,
-      { params: { skip, limit } }
-    )
+  confirm: async (paymentId: number): Promise<PaymentResponse> => {
+    const response = await apiClient.post<PaymentResponse>(`/payments/${paymentId}/confirm`)
     return response.data
   },
 }
@@ -80,26 +112,51 @@ export const underwritingApi = {
 }
 
 export const aiApi = {
-  chat: async (message: string, language = 'en') => {
-    const response = await apiClient.post('/ai/chat', {
-      message,
+  chat: async (input: string, language = 'en', context: Record<string, any> = {}): Promise<AIResponse> => {
+    const payload: AIRequest = {
+      request_id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      task: 'chat',
+      input,
       language,
-    })
+      context,
+    }
+    const response = await apiClient.post<AIResponse>('/ai/chat', payload)
     return response.data
   },
 
-  scenario: async (data: any) => {
-    const response = await apiClient.post('/ai/scenario', data)
+  scenario: async (input: string, language = 'en', context: Record<string, any> = {}): Promise<AIResponse> => {
+    const payload: AIRequest = {
+      request_id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      task: 'scenario',
+      input,
+      language,
+      context,
+    }
+    const response = await apiClient.post<AIResponse>('/ai/scenario', payload)
     return response.data
   },
 
-  riskAnalysis: async (data: any) => {
-    const response = await apiClient.post('/ai/risk-analysis', data)
+  riskAnalysis: async (input: string, language = 'en', context: Record<string, any> = {}): Promise<AIResponse> => {
+    const payload: AIRequest = {
+      request_id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      task: 'risk_analysis',
+      input,
+      language,
+      context,
+    }
+    const response = await apiClient.post<AIResponse>('/ai/risk-analysis', payload)
     return response.data
   },
 
-  underwriting: async (data: any) => {
-    const response = await apiClient.post('/ai/underwriting', data)
+  underwriting: async (input: string, language = 'en', context: Record<string, any> = {}): Promise<AIResponse> => {
+    const payload: AIRequest = {
+      request_id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+      task: 'underwriting',
+      input,
+      language,
+      context,
+    }
+    const response = await apiClient.post<AIResponse>('/ai/underwriting', payload)
     return response.data
   },
 }

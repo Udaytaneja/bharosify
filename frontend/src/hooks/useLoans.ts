@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query'
-import { applicationApi, loanApi, repaymentApi, underwritingApi } from '@/api/financial'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { applicationApi, loanApi, repaymentApi, paymentApi, underwritingApi } from '@/api/financial'
+import { PaymentCreate } from '@/types'
 
 export const useApplications = (skip = 0, limit = 20) => {
   return useQuery({
@@ -14,6 +15,29 @@ export const useApplicationDetail = (applicationId: string) => {
     queryKey: ['applications', applicationId],
     queryFn: () => applicationApi.getDetail(applicationId),
     enabled: !!applicationId,
+  })
+}
+
+export const useCreateApplication = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: { amount: number; purpose: string; documents?: string[] }) =>
+      applicationApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+    },
+  })
+}
+
+export const useUpdateApplication = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      applicationApi.update(id, data),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['applications', variables.id] })
+    },
   })
 }
 
@@ -46,6 +70,29 @@ export const useLoanRepaymentSchedule = (loanId: string, skip = 0, limit = 20) =
     queryKey: ['repayments', 'loan', loanId, skip, limit],
     queryFn: () => repaymentApi.getLoanSchedule(loanId, skip, limit),
     enabled: !!loanId,
+  })
+}
+
+export const useCreatePayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (data: PaymentCreate) => paymentApi.create(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repayments'] })
+      queryClient.invalidateQueries({ queryKey: ['loans'] })
+    },
+  })
+}
+
+export const useConfirmPayment = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (paymentId: number) => paymentApi.confirm(paymentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['repayments'] })
+      queryClient.invalidateQueries({ queryKey: ['loans'] })
+      queryClient.invalidateQueries({ queryKey: ['financial', 'health'] })
+    },
   })
 }
 

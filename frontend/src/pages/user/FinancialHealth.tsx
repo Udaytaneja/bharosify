@@ -3,28 +3,15 @@ import { useTranslation } from 'react-i18next'
 import AppLayout from '@/layouts/AppLayout'
 import { useFinancialHealth } from '@/hooks'
 import { formatCurrency } from '@/utils'
-import { PageHeader, Loading, Card, MetricCard, EmptyState } from '@/components'
+import { PageHeader, Loading, Card, MetricCard, EmptyState, Badge } from '@/components'
 
 const UserFinancialHealth: React.FC = () => {
   const { t } = useTranslation()
   const { data: health, isLoading } = useFinancialHealth()
 
-  const navItems = [
-    { label: t('nav.home'), href: '/user', icon: '🏠' },
-    { label: t('nav.financialHealth'), href: '/user/financial-health', icon: '📊' },
-    { label: t('nav.trust'), href: '/user/trust', icon: '🛡️' },
-    { label: t('nav.transactions'), href: '/user/transactions', icon: '💳' },
-    { label: t('nav.applications'), href: '/user/applications', icon: '📋' },
-    { label: t('nav.loans'), href: '/user/loans', icon: '💰' },
-    { label: t('nav.repayment'), href: '/user/repayment', icon: '📅' },
-    { label: t('nav.aiAssistant'), href: '/user/ai-assistant', icon: '🤖' },
-    { label: t('nav.notifications'), href: '/user/notifications', icon: '🔔' },
-    { label: t('nav.settings'), href: '/user/settings', icon: '⚙️' },
-  ]
-
   if (isLoading) {
     return (
-      <AppLayout navItems={navItems}>
+      <AppLayout>
         <Loading />
       </AppLayout>
     )
@@ -32,17 +19,17 @@ const UserFinancialHealth: React.FC = () => {
 
   if (!health) {
     return (
-      <AppLayout navItems={navItems}>
-        <EmptyState title="No financial data available" />
+      <AppLayout>
+        <EmptyState title="No financial data available" description="Your financial health record is being initialized." />
       </AppLayout>
     )
   }
 
   return (
-    <AppLayout navItems={navItems}>
+    <AppLayout>
       <PageHeader
         title={t('nav.financialHealth')}
-        subtitle="Your complete financial overview"
+        subtitle="Your complete financial assessment and balance breakdown"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -79,15 +66,21 @@ const UserFinancialHealth: React.FC = () => {
       </div>
 
       <Card>
-        <h2 className="text-lg font-semibold text-text-primary mb-4">Details</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <h2 className="text-lg font-semibold text-text-primary mb-4">Financial Health Assessment</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4 bg-bg-page rounded-xl border border-border">
           <div>
-            <p className="text-text-muted text-sm">Score</p>
-            <p className="text-2xl font-bold text-text-primary">{health.score}</p>
+            <p className="text-text-muted text-xs uppercase tracking-wider mb-1">Financial Score</p>
+            <p className="text-3xl font-extrabold text-brand-700">{health.score} / 100</p>
           </div>
           <div>
-            <p className="text-text-muted text-sm">Status</p>
-            <p className="text-2xl font-bold text-brand-700">{health.status}</p>
+            <p className="text-text-muted text-xs uppercase tracking-wider mb-1">Stability Rating</p>
+            <Badge variant={health.score >= 70 ? 'success' : health.score >= 50 ? 'warning' : 'danger'}>
+              {health.status}
+            </Badge>
+          </div>
+          <div>
+            <p className="text-text-muted text-xs uppercase tracking-wider mb-1">Last Evaluation</p>
+            <p className="text-sm font-medium text-text-primary">{new Date(health.updated_at).toLocaleDateString()}</p>
           </div>
         </div>
       </Card>

@@ -22,12 +22,13 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    /* Path mapping */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["src/*"]
-    }
-  },
-  "include": ["src"],
-  "references": [{ "path": "./tsconfig.node.json" }]
+  /* Path mapping */
+     "paths": {
+     "@/*": ["./src/*"]
+     }
+},
+    "include": ["src"],
+    "references": [
+        { "path": "./tsconfig.node.json" }
+    ]
 }
