@@ -1,6 +1,9 @@
 import os
+import json
+import subprocess
 import tempfile
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
@@ -29,6 +32,74 @@ class PaddleOCREngine:
     def __init__(self):
         self.model_name = "PaddleOCR-v4"
 
+    def _ocr_python(self) -> Optional[str]:
+        executable = Path(ai_settings.ocr_python_executable)
+        if not executable.is_absolute():
+            executable = Path.cwd() / executable
+        return str(executable) if ai_settings.ocr_enabled and executable.exists() else None
+
+    def _extract_with_isolated_runtime(self, file_bytes: bytes, file_name: str) -> Tuple[List[OCRLine], float, Dict[str, Any]]:
+        executable = self._ocr_python()
+        if executable is None:
+            return [], 0.0, {"engine": self.model_name, "status": PerceptionStatus.MODEL_UNAVAILABLE.value, "status_message": "Configured OCR Python executable is unavailable.", "lines_count": 0, "mean_confidence": 0.0, "is_available": False}
+
+        start_time = time.time()
+        input_path = None
+        output_path = None
+        script = r'''
+import json, os, sys
+os.environ["FLAGS_enable_pir_api"] = "0"
+os.environ["PFLAGS_enable_onednn"] = "0"
+os.environ["FLAGS_use_mkldnn"] = "0"
+from paddleocr import PaddleOCR
+ocr = PaddleOCR(lang="en", device="cpu", enable_mkldnn=False, ocr_version=os.environ.get("OCR_VERSION", "PP-OCRv5"), use_doc_orientation_classify=False, use_doc_unwarping=False, use_textline_orientation=False)
+results = ocr.predict(sys.argv[1])
+payload = []
+for result in results:
+    data = result if isinstance(result, dict) else dict(result)
+    texts = data.get("rec_texts", [])
+    scores = data.get("rec_scores", [])
+    boxes = data.get("rec_boxes", data.get("dt_polys", []))
+    for index, text in enumerate(texts):
+        box = boxes[index].tolist() if hasattr(boxes[index], "tolist") else boxes[index]
+        if hasattr(box, "reshape"):
+            values = box.reshape(-1).tolist()
+            points = [values[:2], values[2:4]] if len(values) == 4 else box.reshape(-1, 2).tolist()
+        elif len(box) == 4 and all(isinstance(value, (int, float)) for value in box):
+            points = [box[:2], box[2:4]]
+        else:
+            points = box
+        payload.append({"text": str(text).strip(), "confidence": float(scores[index]), "bbox": [int(min(point[0] for point in points)), int(min(point[1] for point in points)), int(max(point[0] for point in points)), int(max(point[1] for point in points))], "page": 1})
+with open(sys.argv[2], "w", encoding="utf-8") as output:
+    json.dump(payload, output)
+'''
+        try:
+            suffix = os.path.splitext(file_name)[1] or ".png"
+            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as input_file:
+                input_file.write(file_bytes)
+                input_path = input_file.name
+            with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as output_file:
+                output_path = output_file.name
+            environment = os.environ.copy()
+            environment["OCR_VERSION"] = ai_settings.ocr_version
+            subprocess.run([executable, "-c", script, input_path, output_path], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, timeout=ai_settings.ocr_timeout_seconds, env=environment)
+            raw_lines = json.loads(Path(output_path).read_text(encoding="utf-8"))
+            lines = [OCRLine(**line) for line in raw_lines if line["text"]]
+            mean_confidence = round(sum(line.confidence for line in lines) / max(len(lines), 1), 2)
+            return lines, mean_confidence, {"engine": self.model_name, "status": PerceptionStatus.SUCCESS.value, "lines_count": len(lines), "mean_confidence": mean_confidence, "latency_ms": round((time.time() - start_time) * 1000.0, 2), "is_available": True, "runtime": executable, "version": ai_settings.ocr_version}
+        except subprocess.CalledProcessError as error:
+            message = error.stderr.decode("utf-8", errors="replace")[-1000:]
+        except Exception as error:
+            message = str(error)
+        finally:
+            for path in (input_path, output_path):
+                if path:
+                    try:
+                        os.remove(path)
+                    except OSError:
+                        pass
+        return [], 0.0, {"engine": self.model_name, "status": PerceptionStatus.OCR_FAILURE.value, "status_message": f"Isolated PaddleOCR inference failed: {message}", "lines_count": 0, "mean_confidence": 0.0, "latency_ms": round((time.time() - start_time) * 1000.0, 2), "is_available": True, "runtime": executable, "version": ai_settings.ocr_version}
+
     def _get_or_load_ocr(self) -> Tuple[Optional[Any], bool, str]:
 
         """
@@ -45,7 +116,7 @@ class PaddleOCREngine:
 
             # Initialize PaddleOCR engine
             ocr_instance = PaddleOCR(
-                use_angle_cls=ai_settings.ocr_use_angle_cls,
+                use_textline_orientation=ai_settings.ocr_use_angle_cls,
                 lang="en",
                 show_log=False,
             )
@@ -83,6 +154,12 @@ class PaddleOCREngine:
             return mock_override_lines, mean_conf, meta
 
         ocr_instance, is_available, status_msg = self._get_or_load_ocr()
+        if self._ocr_python() is not None:
+            lines, confidence, metadata = self._extract_with_isolated_runtime(file_bytes, file_name)
+            if metadata["status"] == PerceptionStatus.SUCCESS.value:
+                return lines, confidence, metadata
+            if os.path.splitext(file_name.lower())[1] in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
+                return lines, confidence, metadata
         if not is_available or ocr_instance is None:
             latency_ms = (time.time() - start_time) * 1000.0
             _, extension = os.path.splitext(file_name.lower())

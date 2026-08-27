@@ -19,6 +19,10 @@ class LayoutFieldExtractor:
         fields: Dict[str, Any] = {}
         evidence: List[str] = []
 
+        def labeled_number(label: str) -> float | None:
+            match = re.search(rf"(?:{label})[^0-9]*([0-9][0-9,]*(?:\.[0-9]+)?)", full_text, re.IGNORECASE)
+            return float(match.group(1).replace(",", "")) if match else None
+
         if document_type == "identity_document":
             # Extract PAN / Aadhaar / Name / DOB
             pan_match = re.search(r'\b[A-Z]{5}[0-9]{4}[A-Z]{1}\b', full_text)
@@ -31,41 +35,44 @@ class LayoutFieldExtractor:
                 fields["date_of_birth"] = dob_match.group(0)
                 evidence.append(f"DOB pattern match: '{dob_match.group(0)}'")
 
-            fields["holder_name"] = "Verified Document Holder"
+            if pan_match:
+                fields["holder_name"] = "Verified Document Holder"
             fields["document_subtype"] = "PAN Card" if pan_match else "Identity Proof"
 
         elif document_type == "bank_statement":
-            fields["account_number"] = "987654321012"
-            fields["bank_name"] = "State Financial Bank"
-            fields["statement_period"] = "30 Days"
-            fields["total_credits"] = 150000.00
-            fields["total_debits"] = 45000.00
-            fields["closing_balance"] = 125450.00
+            account_match = re.search(r"account\s*(?:number|no\.?)\D+([X0-9-]+)", full_text, re.IGNORECASE)
+            if account_match:
+                fields["account_number"] = account_match.group(1)
+            for field_name, label in (("total_credits", "total credits"), ("total_debits", "total debits"), ("closing_balance", "closing balance")):
+                value = labeled_number(label)
+                if value is not None:
+                    fields[field_name] = value
             evidence.append("Extracted account statement balance breakdown from table block")
 
         elif document_type == "salary_slip":
-            fields["employer_name"] = "Enterprise Tech Corp"
-            fields["employee_name"] = "Verified Employee"
-            fields["basic_salary"] = 50000.00
-            fields["hra"] = 25000.00
-            fields["gross_salary"] = 75000.00
-            fields["net_pay"] = 68500.00
+            for field_name, label in (("basic_salary", "basic pay"), ("hra", "hra"), ("gross_salary", "gross salary|gross earnings"), ("net_pay", "net pay")):
+                value = labeled_number(label)
+                if value is not None:
+                    fields[field_name] = value
             evidence.append("Extracted gross & net pay from salary slip breakdown block")
 
         elif document_type == "loan_document":
-            fields["lender_name"] = "AgentTrust Finance Ltd"
-            fields["borrower_name"] = "Verified Borrower"
-            fields["sanctioned_amount"] = 500000.00
-            fields["interest_rate_annual"] = 8.5
-            fields["emi_monthly"] = 12500.00
-            fields["tenure_months"] = 48
+            for field_name, label in (("sanctioned_amount", "principal amount|sanctioned amount"), ("interest_rate_annual", "interest rate"), ("emi_monthly", "emi"), ("tenure_months", "tenure")):
+                value = labeled_number(label)
+                if value is not None:
+                    fields[field_name] = value
             evidence.append("Extracted loan sanction terms and EMI schedule")
 
         else:  # financial_form / default
-            fields["form_title"] = "Form 16 / ITR Financial Summary"
-            fields["assessment_year"] = "2025-2026"
-            fields["gross_total_income"] = 1200000.00
-            fields["total_tax_paid"] = 115000.00
+            if "form 16" in full_text.lower() or "itr" in full_text.lower():
+                fields["form_title"] = "Form 16 / ITR Financial Summary"
+            year_match = re.search(r"assessment year\D+(\d{4}[-/]\d{4})", full_text, re.IGNORECASE)
+            if year_match:
+                fields["assessment_year"] = year_match.group(1)
+            for field_name, label in (("gross_total_income", "gross total income"), ("total_tax_paid", "total tax paid")):
+                value = labeled_number(label)
+                if value is not None:
+                    fields[field_name] = value
             evidence.append("Extracted tax return summary data")
 
         # Include structural layout evidence
