@@ -1,0 +1,84 @@
+{
+  "overall": {
+    "precision": 0.593,
+    "recall": 0.2911,
+    "map50": 0.2418,
+    "map50_95": 0.1364,
+    "f1": 0.3905
+  },
+  "per_class": {
+    "CAPTION": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "map50": 0.002,
+      "f1": 0.0
+    },
+    "FOOTNOTE": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "map50": 0.0,
+      "f1": 0.0
+    },
+    "FORMULA": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "map50": 0.0039,
+      "f1": 0.0
+    },
+    "LIST_ITEM": {
+      "precision": 0.0,
+      "recall": 0.0,
+      "map50": 0.0452,
+      "f1": 0.0
+    },
+    "PAGE_FOOTER": {
+      "precision": 0.4764,
+      "recall": 0.5641,
+      "map50": 0.4816,
+      "f1": 0.5165
+    },
+    "PAGE_HEADER": {
+      "precision": 0.3407,
+      "recall": 0.3571,
+      "map50": 0.2778,
+      "f1": 0.3487
+    },
+    "FIGURE": {
+      "precision": 0.5373,
+      "recall": 0.6506,
+      "map50": 0.5845,
+      "f1": 0.5886
+    },
+    "SECTION_HEADER": {
+      "precision": 0.3982,
+      "recall": 0.4475,
+      "map50": 0.3599,
+      "f1": 0.4214
+    },
+    "TABLE": {
+      "precision": 0.3487,
+      "recall": 0.5625,
+      "map50": 0.3606,
+      "f1": 0.4305
+    },
+    "TEXT_BLOCK": {
+      "precision": 0.4216,
+      "recall": 0.6197,
+      "map50": 0.5438,
+      "f1": 0.5018
+    },
+    "TITLE": {
+      "precision": 1.0,
+      "recall": 0.0,
+      "map50": 0.0,
+      "f1": 0.0
+    }
+  },
+  "latency_ms": {
+    "mean": 265.75,
+    "p95": 449.05,
+    "min": 208.77,
+    "max": 1081.41
+  },
+  "production_gate": "EXPERIMENTAL_CANDIDATE"
+}

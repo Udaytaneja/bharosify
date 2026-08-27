@@ -1,3 +1,4 @@
+from backend.app.models.agent import AgentActionLogModel, AgentModel, AgentPolicyModel
 from backend.app.models.application import LoanApplication
 from backend.app.models.audit import AuditEvent
 from backend.app.models.base import Base
@@ -33,4 +34,7 @@ __all__ = [
     "Payment",
     "Notification",
     "AuditEvent",
+    "AgentModel",
+    "AgentActionLogModel",
+    "AgentPolicyModel",
 ]

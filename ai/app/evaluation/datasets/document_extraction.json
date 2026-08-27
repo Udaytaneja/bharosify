@@ -1,0 +1,11 @@
+[
+  {
+    "id": "doc_ext_001",
+    "task": "document_extraction",
+    "language": "en",
+    "input": "Extract monthly income and PAN number from parsed bank statement.",
+    "context": { "document_type": "bank_statement", "raw_text": "Account Holder: John Doe, Monthly Income: ₹1,50,000.00, PAN: ABCDE1234F" },
+    "expected_financial_values": [150000.00],
+    "ground_truth": "Extracted Income: ₹1,50,000.00, PAN: [REDACTED_PAN_1]"
+  }
+]

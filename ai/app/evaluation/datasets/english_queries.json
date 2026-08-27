@@ -1,0 +1,11 @@
+[
+  {
+    "id": "en_q_001",
+    "task": "financial_health",
+    "language": "en",
+    "input": "Explain my overall financial health score and surplus.",
+    "context": { "income": 100000, "expenses": 40000, "savings": 200000, "existing_loans": 10000, "health_score": 94 },
+    "expected_financial_values": [100000.00, 40000.00, 50000.00],
+    "ground_truth": "Financial Health Score is 94/100 with a surplus of ₹50,000.00"
+  }
+]

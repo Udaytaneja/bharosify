@@ -1,0 +1,11 @@
+[
+  {
+    "id": "hing_q_001",
+    "task": "repayment",
+    "language": "hinglish",
+    "input": "Mera 5L loan par 12.5% rate se monthly EMI batayen 3 saal ke liye",
+    "context": { "principal": 500000, "annual_rate_pct": 12.5, "tenure_months": 36 },
+    "expected_financial_values": [16726.81, 102165.16, 602165.16],
+    "ground_truth": "Aapka monthly EMI ₹16,726.81 hoga"
+  }
+]

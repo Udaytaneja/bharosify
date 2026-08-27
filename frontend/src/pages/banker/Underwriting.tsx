@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import AppLayout from '@/layouts/AppLayout'
 import { useApplications } from '@/hooks'
-import { aiApi } from '@/api/financial'
+import { aiApi, documentApi, DocumentIntelligenceResponse } from '@/api/financial'
 import { formatCurrency } from '@/utils'
 import { 
   PageHeader, 
@@ -24,6 +24,10 @@ const BankerUnderwriting: React.FC = () => {
   const [aiAnalysis, setAiAnalysis] = useState<AIResponse | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
+  const [documentResult, setDocumentResult] = useState<DocumentIntelligenceResponse | null>(null)
+  const [documentFile, setDocumentFile] = useState<File | null>(null)
+  const [isDocumentAnalyzing, setIsDocumentAnalyzing] = useState(false)
+  const documentInputRef = useRef<HTMLInputElement>(null)
 
   const underwritingQueue = applications?.items?.filter(
     (app) => ['submitted', 'under_review', 'underwriting'].includes(app.status)
@@ -47,6 +51,20 @@ const BankerUnderwriting: React.FC = () => {
       setErrorMsg(err.response?.data?.detail || err.message || 'Underwriting analysis failed')
     } finally {
       setIsAnalyzing(false)
+    }
+  }
+
+  const handleDocumentAnalyze = async (file: File) => {
+    setDocumentFile(file)
+    setDocumentResult(null)
+    setErrorMsg('')
+    setIsDocumentAnalyzing(true)
+    try {
+      setDocumentResult(await documentApi.analyze(file))
+    } catch (err: any) {
+      setErrorMsg(err.response?.data?.detail?.message || err.message || 'Document analysis failed')
+    } finally {
+      setIsDocumentAnalyzing(false)
     }
   }
 
@@ -83,6 +101,56 @@ const BankerUnderwriting: React.FC = () => {
         title={t('nav.underwriting')}
         subtitle="AI-assisted credit underwriting & human review decision engine"
       />
+
+      <Card className="mb-6">
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-lg font-semibold text-text-primary">Experimental document perception</h2>
+            <p className="text-sm text-text-muted">YOLO layout and OCR evidence only. Human review remains mandatory.</p>
+          </div>
+          <Button variant="secondary" onClick={() => documentInputRef.current?.click()} disabled={isDocumentAnalyzing}>
+            {isDocumentAnalyzing ? 'Analyzing...' : 'Upload document'}
+          </Button>
+          <input
+            ref={documentInputRef}
+            className="hidden"
+            type="file"
+            accept=".pdf,.png,.jpg,.jpeg,.tiff,.bmp"
+            onChange={(event) => event.target.files?.[0] && handleDocumentAnalyze(event.target.files[0])}
+          />
+        </div>
+        {documentFile && <p className="text-xs text-text-muted mb-3">{documentFile.name}</p>}
+        {documentResult && (
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.8fr)]">
+            <div className="rounded-lg border border-border p-4">
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge variant="info">{documentResult.model_metadata.provenance?.layout_model_status || 'EXPERIMENTAL'}</Badge>
+                <Badge variant="warning">Human review required</Badge>
+                <span className="text-xs text-text-muted self-center">{documentResult.layout_regions.length} layout regions</span>
+              </div>
+              <div className="relative overflow-auto bg-bg-page p-2">
+                {documentFile && documentFile.type.startsWith('image/') ? (
+                  <div className="relative inline-block min-w-full">
+                    <img src={URL.createObjectURL(documentFile)} alt="Uploaded document" className="block max-w-full" />
+                    {documentResult.layout_regions.map((region, index) => {
+                      const [x1, y1, x2, y2] = region.bbox
+                      return <div key={index} className="absolute border-2 border-brand-600" style={{ left: x1, top: y1, width: x2 - x1, height: y2 - y1 }} title={`${region.source_class || region.element_type} ${(region.confidence * 100).toFixed(1)}%`} />
+                    })}
+                  </div>
+                ) : <p className="text-sm text-text-muted">Preview overlay is available for image uploads. PDF evidence is still returned by the API.</p>}
+              </div>
+            </div>
+            <div className="rounded-lg border border-border p-4">
+              <h3 className="text-sm font-semibold text-text-primary mb-2">Detected evidence</h3>
+              <p className="text-xs text-text-muted mb-3">{documentResult.model_metadata.provenance?.indian_domain_validation ? 'Indian validation present' : 'Indian-domain validation not claimed'}</p>
+              <div className="space-y-2 max-h-72 overflow-auto">
+                {documentResult.ocr_lines.map((line, index) => <div key={index} className="text-xs text-text-primary"><span className="font-semibold">{line.text}</span> <span className="text-text-muted">({line.bbox.join(', ')})</span></div>)}
+                {!documentResult.ocr_lines.length && <p className="text-sm text-text-muted">No OCR lines returned.</p>}
+              </div>
+            </div>
+          </div>
+        )}
+      </Card>
 
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-text-primary mb-4">

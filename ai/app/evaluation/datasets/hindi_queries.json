@@ -1,0 +1,11 @@
+[
+  {
+    "id": "hi_q_001",
+    "task": "repayment",
+    "language": "hi",
+    "input": "₹5,00,000 लोन पर 12.5% ब्याज दर से 36 महीने की किश्त क्या होगी?",
+    "context": { "principal": 500000, "annual_rate_pct": 12.5, "tenure_months": 36 },
+    "expected_financial_values": [16726.81, 102165.16, 602165.16],
+    "ground_truth": "Exact मासिक EMI ₹16,726.81 है।"
+  }
+]

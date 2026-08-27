@@ -1,0 +1,12 @@
+[
+  {
+    "id": "uw_exp_001",
+    "task": "underwriting",
+    "language": "en",
+    "input": "Formulate underwriting recommendation for applicant with FOIR 45% and Credit Score 780.",
+    "context": { "income": 120000, "expenses": 40000, "credit_score": 780, "requested_amount": 300000 },
+    "expected_decision": "review",
+    "expected_recommendation": "review",
+    "ground_truth": "Applicant demonstrates good credit standing. Underwriting proposal recommended for human banker approval."
+  }
+]

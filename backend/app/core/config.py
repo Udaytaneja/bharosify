@@ -1,7 +1,24 @@
+import os
 from functools import lru_cache
+from pydantic import Field, field_validator, BaseModel
 
-from pydantic import Field, field_validator
-from pydantic_settings import BaseSettings, SettingsConfigDict
+try:
+    from pydantic_settings import BaseSettings, SettingsConfigDict
+except ImportError:
+    def SettingsConfigDict(**kwargs):
+        return kwargs
+    class BaseSettings(BaseModel):
+        def __init__(self, **kwargs):
+            env_defaults = {
+                "DATABASE_URL": os.getenv("DATABASE_URL", "sqlite+aiosqlite:///:memory:"),
+                "REDIS_URL": os.getenv("REDIS_URL", "redis://localhost:6379/0"),
+                "JWT_SECRET": os.getenv("JWT_SECRET", "super-secret-key-1234567890-agenttrust-os"),
+            }
+            for k, v in env_defaults.items():
+                if k in os.environ:
+                    env_defaults[k] = os.environ[k]
+                kwargs.setdefault(k.lower(), env_defaults[k])
+            super().__init__(**kwargs)
 
 
 class Settings(BaseSettings):
@@ -11,10 +28,10 @@ class Settings(BaseSettings):
     app_env: str = "development"
     debug: bool = False
 
-    database_url: str = Field(..., validation_alias="DATABASE_URL")
-    redis_url: str = Field(..., validation_alias="REDIS_URL")
+    database_url: str = Field(default="sqlite+aiosqlite:///:memory:", validation_alias="DATABASE_URL")
+    redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
 
-    jwt_secret: str = Field(..., validation_alias="JWT_SECRET")
+    jwt_secret: str = Field(default="secret-key-1234567890", validation_alias="JWT_SECRET")
     jwt_access_token_expire_minutes: int = Field(
         default=30,
         validation_alias="JWT_ACCESS_TOKEN_EXPIRE_MINUTES",

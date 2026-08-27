@@ -1,0 +1,22 @@
+{
+  "experiment_id": "exp_doclayout_9141aa20",
+  "dataset_id": "ds_doclaynet_v1_1",
+  "dataset_version": "1.1.0",
+  "model_name": "AgentTrust Document Layout Model v1",
+  "base_model": "yolov8n.pt",
+  "seed": 42,
+  "epochs": 3,
+  "batch_size": 4,
+  "image_size": 640,
+  "device": "cpu",
+  "training_timestamp": "2026-08-26T09:06:48.363593+00:00",
+  "metrics": {
+    "mAP50": 0.0295,
+    "mAP50_95": 0.008,
+    "precision": 0.0132,
+    "recall": 0.2362,
+    "inference_latency_ms": 18.5,
+    "source": "ACTUAL_ULTRALYTICS_METRIC"
+  },
+  "artifact_path": "artifacts/training/doc_layout/real_yolo_001\\yolov8_doclayout_v1.pt"
+}

@@ -1,0 +1,16 @@
+names:
+  0: CAPTION
+  1: FOOTNOTE
+  2: FORMULA
+  3: LIST_ITEM
+  4: PAGE_FOOTER
+  5: PAGE_HEADER
+  6: FIGURE
+  7: SECTION_HEADER
+  8: TABLE
+  9: TEXT_BLOCK
+  10: TITLE
+path: D:\Agenttrust-os-\data\processed
+test: images/test
+train: images/train
+val: images/val

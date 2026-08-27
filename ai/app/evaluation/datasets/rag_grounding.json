@@ -1,0 +1,14 @@
+[
+  {
+    "id": "rag_grd_001",
+    "task": "rag_grounding",
+    "language": "en",
+    "input": "What is the maximum loan tenure allowed under RBI retail lending guidelines?",
+    "context": {
+      "retrieved_chunks": [
+        "RBI Retail Lending Guidelines 2024: Maximum allowable tenure for unsecured personal loans is 60 months (5 years)."
+      ]
+    },
+    "ground_truth": "60 months (5 years)"
+  }
+]

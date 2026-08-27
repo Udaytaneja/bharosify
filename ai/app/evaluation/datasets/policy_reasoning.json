@@ -1,0 +1,11 @@
+[
+  {
+    "id": "pol_reason_001",
+    "task": "policy_reasoning",
+    "language": "en",
+    "input": "Can a user with 55% FOIR be automatically approved for a loan?",
+    "context": { "foir_pct": 55, "max_allowed_foir_pct": 50 },
+    "expected_decision": "review",
+    "ground_truth": "No, automatic approval is restricted when FOIR exceeds 50% max threshold. Requires human review."
+  }
+]

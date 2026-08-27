@@ -1,0 +1,44 @@
+[
+  {
+    "chunk_id": "chk_doc_v1_0",
+    "text": "Policy Version 1 (Inactive)",
+    "embedding": [],
+    "metadata": {
+      "document_id": "doc_v1",
+      "document_type": "bank_policy",
+      "organization_id": "org_A",
+      "user_id": null,
+      "allowed_roles": [
+        "user",
+        "banker"
+      ],
+      "data_sensitivity": "internal",
+      "consent_given": true,
+      "is_deleted": false,
+      "policy_version": "1.0.0",
+      "is_active_version": false,
+      "effective_until": null
+    }
+  },
+  {
+    "chunk_id": "chk_doc_v2_0",
+    "text": "Policy Version 2 (Active Current)",
+    "embedding": [],
+    "metadata": {
+      "document_id": "doc_v2",
+      "document_type": "bank_policy",
+      "organization_id": "org_A",
+      "user_id": null,
+      "allowed_roles": [
+        "user",
+        "banker"
+      ],
+      "data_sensitivity": "internal",
+      "consent_given": true,
+      "is_deleted": false,
+      "policy_version": "2.0.0",
+      "is_active_version": true,
+      "effective_until": null
+    }
+  }
+]

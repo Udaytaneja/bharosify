@@ -1,0 +1,92 @@
+{
+  "models": [
+    {
+      "model_id": "gemini-1.5-flash",
+      "provider": "gemini",
+      "category": "LLM",
+      "name": "Google Gemini 1.5 Flash",
+      "capabilities": ["chat", "scenario", "text-generation", "fast-inference"],
+      "cost_per_1k_input_tokens": 0.000075,
+      "cost_per_1k_output_tokens": 0.0003,
+      "max_context_tokens": 1000000,
+      "recommended_tasks": ["chat", "scenario"]
+    },
+    {
+      "model_id": "gemini-1.5-pro",
+      "provider": "gemini",
+      "category": "REASONING_LLM",
+      "name": "Google Gemini 1.5 Pro",
+      "capabilities": ["risk-analysis", "underwriting", "complex-reasoning", "xai"],
+      "cost_per_1k_input_tokens": 0.00125,
+      "cost_per_1k_output_tokens": 0.005,
+      "max_context_tokens": 2000000,
+      "recommended_tasks": ["risk_analysis", "underwriting"]
+    },
+    {
+      "model_id": "sarvam-2b-indic",
+      "provider": "sarvam",
+      "category": "LLM",
+      "name": "Sarvam 2B Indic LLM",
+      "capabilities": ["indic-nlp", "hindi-chat", "code-switching"],
+      "cost_per_1k_input_tokens": 0.0001,
+      "cost_per_1k_output_tokens": 0.0002,
+      "max_context_tokens": 8192,
+      "recommended_tasks": ["chat", "scenario"]
+    },
+    {
+      "model_id": "paddleocr-v4",
+      "provider": "ocr_engine",
+      "category": "OCR_MODEL",
+      "name": "Baidu PaddleOCR v4",
+      "capabilities": ["document-ocr", "text-extraction", "table-recognition"],
+      "cost_per_1k_input_tokens": 0.0,
+      "cost_per_1k_output_tokens": 0.0,
+      "max_context_tokens": 4096,
+      "recommended_tasks": ["ocr"]
+    },
+    {
+      "model_id": "xgboost-credit-v1",
+      "provider": "xgboost_risk",
+      "category": "RISK_MODEL",
+      "name": "XGBoost Credit Risk Scoring Engine",
+      "capabilities": ["credit-scoring", "dti-analysis", "risk-classification"],
+      "cost_per_1k_input_tokens": 0.0,
+      "cost_per_1k_output_tokens": 0.0,
+      "max_context_tokens": 2048,
+      "recommended_tasks": ["risk_analysis", "underwriting"]
+    },
+    {
+      "model_id": "isolation-forest-v1",
+      "provider": "isolation_forest",
+      "category": "ANOMALY_MODEL",
+      "name": "Isolation Forest Transaction Anomaly Detector",
+      "capabilities": ["fraud-detection", "velocity-spikes", "anomaly-scoring"],
+      "cost_per_1k_input_tokens": 0.0,
+      "cost_per_1k_output_tokens": 0.0,
+      "max_context_tokens": 2048,
+      "recommended_tasks": ["fraud_detection"]
+    },
+    {
+      "model_id": "vector-embedding-v1",
+      "provider": "embedding_engine",
+      "category": "EMBEDDING_MODEL",
+      "name": "Vector Embedding Engine (384-dim)",
+      "capabilities": ["embeddings", "semantic-search", "rag-retrieval"],
+      "cost_per_1k_input_tokens": 0.0,
+      "cost_per_1k_output_tokens": 0.0,
+      "max_context_tokens": 2048,
+      "recommended_tasks": ["embeddings"]
+    },
+    {
+      "model_id": "mock-deterministic-v1",
+      "provider": "mock",
+      "category": "LLM",
+      "name": "Local Deterministic Mock Engine",
+      "capabilities": ["chat", "scenario", "risk-analysis", "underwriting", "fallback"],
+      "cost_per_1k_input_tokens": 0.0,
+      "cost_per_1k_output_tokens": 0.0,
+      "max_context_tokens": 32000,
+      "recommended_tasks": ["fallback", "testing"]
+    }
+  ]
+}

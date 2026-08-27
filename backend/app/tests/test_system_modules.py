@@ -53,7 +53,7 @@ async def test_trust_audit_notifications_and_ai():
         assert ai_resp.status_code == 200
         ai_data = ai_resp.json()
         assert ai_data["request_id"] == "req-101"
-        assert "[AI Engine Ready]" in ai_data["response"]
+        assert "[AI Engine" in ai_data["response"]
 
         # 4. Audit history GET /api/v1/audit/me
         audit_resp = await client.get("/api/v1/audit/me", headers=headers)

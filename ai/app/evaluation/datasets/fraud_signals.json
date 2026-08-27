@@ -1,0 +1,17 @@
+[
+  {
+    "id": "fraud_sig_001",
+    "task": "anomaly_explanation",
+    "language": "en",
+    "input": "Analyze duplicate transaction attempt of ₹50,000 to same merchant within 1 minute.",
+    "context": {
+      "transactions": [
+        {"id": "T1", "amount": 50000, "type": "expense", "merchant": "Luxury Store"},
+        {"id": "T2", "amount": 50000, "type": "expense", "merchant": "Luxury Store"}
+      ]
+    },
+    "expected_decision": "escalate",
+    "expected_anomalies_count": 1,
+    "ground_truth": "Duplicate transaction anomaly detected for merchant Luxury Store."
+  }
+]

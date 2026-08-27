@@ -1,0 +1,22 @@
+[
+  {
+    "id": "fin_qa_001",
+    "task": "repayment",
+    "language": "en",
+    "input": "Calculate monthly EMI for ₹5,00,000 principal at 12.5% rate for 36 months.",
+    "context": { "principal": 500000, "annual_rate_pct": 12.5, "tenure_months": 36 },
+    "expected_decision": "advise",
+    "expected_financial_values": [16726.81],
+    "ground_truth": "EMI is ₹16,726.81, Total Interest is ₹1,02,165.16"
+  },
+  {
+    "id": "fin_qa_002",
+    "task": "affordability",
+    "language": "en",
+    "input": "What is my max affordable loan capacity if my income is ₹1,00,000 and expenses are ₹30,000?",
+    "context": { "income": 100000, "expenses": 30000, "existing_loans": 10000, "proposed_annual_rate_pct": 12.5, "tenure_months": 36 },
+    "expected_decision": "approve",
+    "expected_financial_values": [10000.00],
+    "ground_truth": "Max affordable EMI is ₹10,000.00 and max loan principal capacity is ₹2,98,906.66"
+  }
+]

@@ -1,7 +1,11 @@
+from contextlib import asynccontextmanager
+
 from fastapi import APIRouter, FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 
+from backend.app.api.agents import router as agents_router
 from backend.app.api.ai import router as ai_router
 from backend.app.api.applications import router as applications_router
 from backend.app.api.audit import router as audit_router
@@ -14,12 +18,33 @@ from backend.app.api.payments import router as payments_router
 from backend.app.api.repayments import router as repayments_router
 from backend.app.api.trust import router as trust_router
 from backend.app.api.users import router as users_router
+from backend.app.core.config import settings
+from backend.app.core.database import engine
+from backend.app.models import Base
+
+
+@asynccontextmanager
+async def lifespan(application: FastAPI):
+    if settings.app_env == "development" and settings.database_url.startswith("sqlite"):
+        async with engine.begin() as connection:
+            await connection.run_sync(Base.metadata.create_all)
+    yield
 
 app = FastAPI(
     title="AgentTrust OS",
     description="Secure financial trust and intelligence platform",
     version="1.0.0",
+    lifespan=lifespan,
 )
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list({settings.frontend_url, "http://localhost:5173", "http://127.0.0.1:5173"}),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 
 # Standard Error Format Handler matching contracts/schemas.md
@@ -74,8 +99,10 @@ api_v1_router.include_router(payments_router)
 api_v1_router.include_router(notifications_router)
 api_v1_router.include_router(audit_router)
 api_v1_router.include_router(ai_router)
+api_v1_router.include_router(agents_router)
 
 app.include_router(api_v1_router)
+
 
 # Root-level fallback for backward compatibility
 app.include_router(auth_router)

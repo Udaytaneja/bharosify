@@ -149,7 +149,7 @@ async def test_full_financial_end_to_end_workflow():
             res_p = await session.execute(text(f"SELECT status, reconciled FROM payments WHERE id = {pay_id};"))
             row_p = res_p.fetchone()
             assert row_p.status == "completed"
-            assert row_p.reconciled is True
+            assert bool(row_p.reconciled) is True
 
         # Step 10: Audit Log DB Verification
         async with AsyncSessionLocal() as session:

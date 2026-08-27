@@ -1,0 +1,19 @@
+path: D:\Agenttrust-os-\data\processed\indian_fin_docs
+train: images/train
+val: images/val
+test: images/test
+names:
+  0: DOCUMENT_HEADER
+  1: DOCUMENT_TITLE
+  2: BANK_NAME
+  3: EMPLOYER_NAME
+  4: CUSTOMER_NAME
+  5: ACCOUNT_NUMBER
+  6: IFSC_CODE
+  7: DATE_RANGE
+  8: TRANSACTION_TABLE
+  9: TABLE_HEADER
+  10: TOTAL_AMOUNT
+  11: SIGNATURE
+  12: STAMP
+

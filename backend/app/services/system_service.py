@@ -108,6 +108,10 @@ async def process_payment(
     return payment
 
 
+from ai.app.gateway import ai_gateway
+from ai.app.schemas.requests import AIExecutionRequest
+
+
 # AI Backend Integration Wrapper
 async def handle_ai_request(
     db: AsyncSession, current_user: User, payload: AIRequest, task_type: str
@@ -122,11 +126,24 @@ async def handle_ai_request(
         resource_id=payload.request_id,
     )
 
-    return AIResponse(
+    exec_req = AIExecutionRequest(
         request_id=payload.request_id,
-        response=f"[AI Engine Ready] Processed task '{task_type}' for input: {payload.input}",
-        reasoning_summary=f"Context verified for user {current_user.id} ({current_user.role}). Financial analysis complete.",
-        evidence=["Verified profile data", "Historical transaction stability"],
-        recommendation="approve" if current_user.role == "banker" else "review",
-        requires_human_review=False,
+        user_id=current_user.id,
+        role=current_user.role,
+        task=task_type,
+        input=payload.input,
+        language=payload.language,
+        context=payload.context or {},
+    )
+
+    res = await ai_gateway.execute(exec_req)
+
+    return AIResponse(
+        request_id=res.request_id,
+        response=res.response,
+        confidence=res.confidence,
+        reasoning_summary=res.reasoning_summary,
+        evidence=res.evidence,
+        recommendation=res.recommendation,
+        requires_human_review=res.requires_human_review,
     )

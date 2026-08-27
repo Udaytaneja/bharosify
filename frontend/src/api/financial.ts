@@ -160,3 +160,38 @@ export const aiApi = {
     return response.data
   },
 }
+
+export interface DocumentIntelligenceResponse {
+  document_type: string
+  fields: Record<string, unknown>
+  confidence: number
+  anomalies: Array<Record<string, unknown>>
+  evidence: string[]
+  model_metadata: Record<string, any>
+  layout_regions: Array<{
+    element_type: string
+    source_class?: string
+    semantic_class?: string
+    bbox: [number, number, number, number]
+    confidence: number
+    page: number
+  }>
+  ocr_lines: Array<{
+    text: string
+    confidence: number
+    bbox: [number, number, number, number]
+    page: number
+  }>
+  requires_review: boolean
+}
+
+export const documentApi = {
+  analyze: async (file: File): Promise<DocumentIntelligenceResponse> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await apiClient.post<DocumentIntelligenceResponse>('/ai/document', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    return response.data
+  },
+}

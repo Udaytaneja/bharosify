@@ -1,0 +1,14 @@
+{
+  "dataset": "financial_qa.json",
+  "metadata": {
+    "model_id": "gemini-3.6-flash",
+    "model_version": "v1.0",
+    "prompt_version": "v1.0"
+  },
+  "metrics": {
+    "accuracy": 95.0,
+    "f1": 0.95
+  },
+  "report_id": "run_eval_101",
+  "created_at": "2026-08-27 12:41:34 UTC"
+}
