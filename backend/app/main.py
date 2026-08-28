@@ -11,6 +11,7 @@ from backend.app.api.applications import router as applications_router
 from backend.app.api.audit import router as audit_router
 from backend.app.api.auth import router as auth_router
 from backend.app.api.bankers import router as bankers_router
+from backend.app.api.documents import router as documents_router
 from backend.app.api.financial import router as financial_router
 from backend.app.api.loans import router as loans_router
 from backend.app.api.notifications import router as notifications_router
@@ -92,6 +93,7 @@ api_v1_router.include_router(users_router)
 api_v1_router.include_router(financial_router)
 api_v1_router.include_router(trust_router)
 api_v1_router.include_router(bankers_router)
+api_v1_router.include_router(documents_router)
 api_v1_router.include_router(applications_router)
 api_v1_router.include_router(loans_router)
 api_v1_router.include_router(repayments_router)

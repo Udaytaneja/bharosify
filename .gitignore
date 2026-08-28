@@ -37,6 +37,8 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+*.db
+uploads/
 
 # Secrets and certificates
 *.pem

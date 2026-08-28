@@ -1,221 +1,217 @@
-// Shared types matching contracts/schemas.md
+// Domain Types & API Contracts for AgentTrust OS
 
-export interface User {
-  id: string
-  name: string
-  email: string
-  phone: string
-  role: 'user' | 'banker'
-  language: 'en' | 'hi'
-  created_at: string
-  updated_at: string
-}
-
-export interface AuthTokens {
-  access_token: string
-  refresh_token: string
-  token_type: string
-  user: User
-}
+export type UserRole = 'banker' | 'applicant' | null;
 
 export interface UserProfile {
-  user_id: string
-  name: string
-  email: string
-  phone: string
-  language: 'en' | 'hi'
-  profile_status: string
+  id: string;
+  name: string;
+  role: UserRole;
+  title: string;
+  email: string;
+  authLevel?: string;
+  accountStatus?: 'VERIFIED' | 'PENDING' | 'SUSPENDED';
 }
 
-export interface FinancialProfile {
-  user_id: string
-  income: number
-  expenses: number
-  savings: number
-  assets: number
-  liabilities: number
-  existing_loans: number
-}
+export type ApplicationStage =
+  | 'Pre-Qualification'
+  | 'Document OCR'
+  | 'Underwriter Review'
+  | 'Credit Committee'
+  | 'Final Closing'
+  | 'Disbursed';
 
-export interface FinancialHealth {
-  user_id: string
-  score: number
-  income: number
-  expenses: number
-  savings: number
-  debt: number
-  repayment_burden: number
-  status: string
-  updated_at: string
-}
-
-export interface Transaction {
-  id: string
-  user_id: string
-  amount: number
-  type: 'income' | 'expense' | 'transfer'
-  category: string
-  merchant: string
-  description: string
-  date: string
-  status: 'pending' | 'completed' | 'failed' | 'reversed'
-}
-
-export interface TrustProfile {
-  user_id: string
-  score: number
-  level: 'critical' | 'needs_attention' | 'good' | 'trusted'
-  change: number
-  factors: TrustFactor[]
-  updated_at: string
-}
-
-export interface TrustFactor {
-  name: string
-  impact: number
-  value: string
-  description: string
-}
+export type ApplicationStatus =
+  | 'UNDER_REVIEW'
+  | 'APPROVED_ACTIVE'
+  | 'COMPLETED'
+  | 'REJECTED';
 
 export interface LoanApplication {
-  id: string
-  customer_id: string
-  amount: number
-  purpose: string
-  status: 'draft' | 'submitted' | 'under_review' | 'documents_required' | 'underwriting' | 'approved' | 'rejected' | 'withdrawn' | 'completed'
-  documents: string[]
-  created_at: string
-  updated_at: string
+  id: string;
+  applicantName: string;
+  type: string;
+  category: 'Retail / Mortgage' | 'SME / Term Loan' | 'Retail / Auto' | 'Commercial Credit' | 'Project Finance';
+  amount: string;
+  amountNumeric: number;
+  dateSubmitted: string;
+  lastUpdated: string;
+  stage: ApplicationStage;
+  status: ApplicationStatus;
+  riskRating: 'Low' | 'Elevated' | 'High';
+  trustScore: number;
+  assistedFlags: string[];
 }
 
-export interface Loan {
-  id: string
-  application_id: string
-  customer_id: string
-  principal: number
-  interest_rate: number
-  duration: number
-  outstanding_amount: number
-  status: 'pending' | 'active' | 'completed' | 'defaulted' | 'cancelled'
-  start_date: string
-  maturity_date: string
+export interface PaymentScheduleItem {
+  num: string;
+  dueDate: string;
+  principal: string;
+  interest: string;
+  total: string;
+  status: 'PAID' | 'DUE SOON' | 'SCHEDULED';
 }
 
-export interface Repayment {
-  id: string
-  loan_id: string
-  amount: number
-  due_date: string
-  paid_date: string | null
-  status: 'upcoming' | 'pending' | 'paid' | 'partially_paid' | 'failed' | 'overdue'
-  payment_reference: string
+export interface ActiveLoanFacility {
+  facilityId: string;
+  facilityName: string;
+  category: string;
+  principalOutstanding: number;
+  originalAmount: number;
+  percentPaid: number;
+  interestRate: string;
+  interestPaidYtd: number;
+  maturityDate: string;
+  nextPaymentDueDate: string;
+  nextPaymentAmount: number;
+  schedule: PaymentScheduleItem[];
 }
 
-export interface Notification {
-  id: string
-  user_id: string
-  type: 'info' | 'success' | 'warning' | 'action_required'
-  title: string
-  message: string
-  status: 'unread' | 'read'
-  created_at: string
+export interface FinancialHealthProfile {
+  trustIndexScore: number;
+  borrowerTier: string;
+  evaluationSummary: string;
+  repaymentOnTimeRate: number;
+  revenueTrendYoy: string;
+  dtiRatioCurrent: number;
+  dtiBenchmarkFloor: number;
+  liquidityRatio: number;
+  badges: string[];
 }
 
-export interface Customer {
-  id: string
-  name: string
-  email: string
-  phone: string
-  trust_profile: TrustProfile
-  financial_health: FinancialHealth
-  account_status: 'active' | 'inactive' | 'suspended' | 'blocked'
+export interface DocumentItem {
+  id: string;
+  name: string;
+  type: string;
+  requirement: 'REQUIRED' | 'RECOMMENDED' | 'OPTIONAL';
+  dateUploaded: string;
+  status: 'VERIFIED' | 'PROCESSING_OCR' | 'NOT UPLOADED';
+  ocrScore?: number;
+  tamperRisk?: 'NONE' | 'LOW_FLAG' | 'HIGH_FLAG';
 }
 
-export interface RiskAssessment {
-  id: string
-  customer_id: string
-  score: number
-  level: 'low' | 'medium' | 'high' | 'critical'
-  factors: string[]
-  evidence: string
-  recommendation: string
-  confidence: number
-  created_at: string
+export interface ExtractedField {
+  fieldKey: string;
+  label: string;
+  extractedValue: string;
+  confidenceScore: number;
+  hasWarning?: boolean;
 }
 
-export interface FraudSignal {
-  id: string
-  customer_id: string
-  transaction_id: string
-  type: string
-  severity: 'low' | 'medium' | 'high' | 'critical'
-  score: number
-  evidence: string
-  status: 'open' | 'under_review' | 'resolved' | 'false_positive'
-  created_at: string
+export interface UnderwritingCase {
+  caseId: string;
+  applicantName: string;
+  ssnMasked: string;
+  ficoScore: number;
+  annualRevenue: number;
+  requestedAmount: number;
+  purpose: string;
+  termMonths: number;
+  ltvRatio: number;
+  dscrRatio: number;
+  activeDocument: string;
+  aiRecommendation: string;
+  aiConfidence: number;
+  policyChecks: {
+    ruleName: string;
+    condition: string;
+    passed: boolean;
+    valString: string;
+  }[];
+  auditTrailId: string;
 }
 
-export interface Underwriting {
-  application_id: string
-  risk_score: number
-  risk_level: 'low' | 'medium' | 'high' | 'critical'
-  factors: string[]
-  evidence: string
-  recommendation: string
-  confidence: number
-  human_review_required: boolean
-  decision: 'approve' | 'review' | 'reject' | 'escalate'
+export interface AuditLogEntry {
+  id: string;
+  timestamp: string;
+  actorType: 'SYS' | 'USR' | 'MGR';
+  actor: string;
+  action: string;
+  resource: string;
+  status: 'SUCCESS' | 'BLOCKED';
+  evidence: string;
+  hash: string;
 }
 
-export interface PaymentCreate {
-  amount: number
-  payment_reference: string
-  idempotency_key: string
-  transaction_id?: number | null
-  repayment_id?: number | null
+export interface GovernanceConfig {
+  dtiRatioMax: number;
+  trustIndexCutoffMin: number;
+  aiAutonomyLevel: 'low' | 'medium' | 'high';
+  rules: {
+    id: string;
+    name: string;
+    condition: string;
+    action: string;
+    active: boolean;
+  }[];
 }
 
-export interface PaymentResponse {
-  id: number
-  user_id: number
-  amount: number
-  payment_reference: string
-  idempotency_key: string
-  status: string
-  reconciled: boolean
-  created_at: string
+// Extended Application Submission Domain Models
+export interface PersonalDetails {
+  fullName: string;
+  fatherName: string;
+  maritalStatus: 'Married' | 'Unmarried';
+  spouseName?: string;
+  dob: string;
 }
 
-export interface AIRequest {
-  request_id: string
-  task: 'chat' | 'scenario' | 'risk_analysis' | 'underwriting'
-  input: string
-  language?: string
-  context?: Record<string, any>
+export interface LegalHeir {
+  id: string;
+  name: string;
+  relation: string;
+  address: string;
+  age: number | string;
 }
 
-export interface AIResponse {
-  request_id: string
-  response: string
-  confidence: number
-  reasoning_summary: string
-  evidence: any[]
-  recommendation: string
-  requires_human_review: boolean
+export interface PersonalFinancialReport {
+  assetsDescription: string;
+  totalAssetsValue: number | string;
+  liabilitiesDescription: string;
+  totalLiabilitiesValue: number | string;
+  otherNotes?: string;
 }
 
-export interface PaginatedResponse<T> {
-  items: T[]
-  total: number
-  skip: number
-  limit: number
+export interface PreviousLoan {
+  id: string;
+  lenderName: string;
+  originalAmount: number | string;
+  outstandingAmount: number | string;
+  status: 'Active' | 'Closed' | 'Default';
+  notes?: string;
 }
 
-export interface ApiError {
-  error: {
-    code: string
-    message: string
-    details: any
-  }
+export interface GuarantorDetails {
+  guarantorName: string;
+  relation: string;
+  netWorth: number | string;
+  guaranteeAmount: number | string;
+  liabilityDetails: string;
 }
 
+export interface QualificationDetails {
+  highestEducation: 'Undergraduate' | 'Postgraduate' | 'Professional' | 'Doctorate' | 'Other';
+  institutionName: string;
+  graduationYear: string;
+}
+
+export interface IdentityDocuments {
+  panDocument?: DocumentItem;
+  aadhaarDocument?: DocumentItem;
+}
+
+export interface LoanRequestDetails {
+  loanAmount: number | string;
+  purpose: 'Social' | 'Medical' | 'Commercial Real Estate' | 'Working Capital' | 'Equipment Financing' | 'Refinance' | 'Other';
+  scheme: string;
+}
+
+export interface FullApplicationSubmission {
+  personalDetails: PersonalDetails;
+  legalHeirs: LegalHeir[];
+  financialReport: PersonalFinancialReport;
+  previousLoans: PreviousLoan[];
+  guaranteeDetails: GuarantorDetails;
+  qualification: QualificationDetails;
+  identityDocs: IdentityDocuments;
+  loanRequest: LoanRequestDetails;
+  otherInfoToBank?: string;
+}

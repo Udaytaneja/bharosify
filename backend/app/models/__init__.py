@@ -2,6 +2,7 @@ from backend.app.models.agent import AgentActionLogModel, AgentModel, AgentPolic
 from backend.app.models.application import LoanApplication
 from backend.app.models.audit import AuditEvent
 from backend.app.models.base import Base
+from backend.app.models.document import Document
 from backend.app.models.financial_health import FinancialHealth
 from backend.app.models.financial_profile import FinancialProfile
 from backend.app.models.fraud import FraudSignal
@@ -20,6 +21,7 @@ __all__ = [
     "Base",
     "User",
     "UserProfile",
+    "Document",
     "FinancialProfile",
     "FinancialHealth",
     "Transaction",
