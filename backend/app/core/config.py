@@ -25,8 +25,8 @@ class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
 
     app_name: str = "AgentTrust-OS"
-    app_env: str = "development"
-    debug: bool = False
+    app_env: str = Field(default="development", validation_alias="APP_ENV")
+    debug: bool = Field(default=False, validation_alias="DEBUG")
 
     database_url: str = Field(default="sqlite+aiosqlite:///:memory:", validation_alias="DATABASE_URL")
     redis_url: str = Field(default="redis://localhost:6379/0", validation_alias="REDIS_URL")
@@ -45,6 +45,29 @@ class Settings(BaseSettings):
         default="http://localhost:5173",
         validation_alias="FRONTEND_URL",
     )
+    cors_origins: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173",
+        validation_alias="CORS_ORIGINS",
+    )
+
+    # Object Storage Configuration (Local vs S3/R2)
+    storage_provider: str = Field(default="local", validation_alias="STORAGE_PROVIDER")
+    s3_bucket_name: str = Field(default="", validation_alias="S3_BUCKET_NAME")
+    s3_endpoint_url: str = Field(default="", validation_alias="S3_ENDPOINT_URL")
+    s3_access_key_id: str = Field(default="", validation_alias="S3_ACCESS_KEY_ID")
+    s3_secret_access_key: str = Field(default="", validation_alias="S3_SECRET_ACCESS_KEY")
+    s3_region: str = Field(default="us-east-1", validation_alias="S3_REGION")
+
+    # AI Perception Model Configuration
+    yolo_model_path: str = Field(
+        default="runs/detect/artifacts/training/doc_layout/real_yolo_002/train_run/weights/best.pt",
+        validation_alias="YOLO_MODEL_PATH",
+    )
+    ocr_enabled: bool = Field(default=True, validation_alias="OCR_ENABLED")
+    ocr_python_executable: str = Field(
+        default="ocr-env/Scripts/python.exe", validation_alias="OCR_PYTHON_EXECUTABLE"
+    )
+    ocr_timeout_seconds: int = Field(default=30, validation_alias="OCR_TIMEOUT_SECONDS")
 
     ai_api_key: str | None = Field(
         default=None,

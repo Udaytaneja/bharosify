@@ -39,6 +39,7 @@ htmlcov/
 *.temp
 *.db
 uploads/
+ocr-env/
 
 # Secrets and certificates
 *.pem

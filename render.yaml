@@ -1,0 +1,46 @@
+services:
+  - type: web
+    name: agenttrust-os-api
+    env: python
+    region: oregon
+    plan: standard
+    buildCommand: "pip install -r requirements.txt && python -m alembic -c backend/alembic.ini upgrade head"
+    startCommand: "gunicorn -k uvicorn.workers.UvicornWorker backend.app.main:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DEBUG
+        value: "false"
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: STORAGE_PROVIDER
+        value: s3
+      - key: S3_BUCKET_NAME
+        sync: false
+      - key: S3_ENDPOINT_URL
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+      - key: YOLO_MODEL_PATH
+        value: runs/detect/artifacts/training/doc_layout/real_yolo_002/train_run/weights/best.pt
+      - key: OCR_ENABLED
+        value: "true"
+
+  - type: web
+    name: agenttrust-os-frontend
+    env: static
+    buildCommand: "cd frontend && npm install && npm run build"
+    staticPublishPath: "./frontend/dist"
+    envVars:
+      - key: VITE_API_BASE_URL
+        sync: false

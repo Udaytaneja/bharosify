@@ -10,10 +10,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from backend.app.models.document import Document
 from backend.app.models.user import User
+from backend.app.services.storage_service import storage_service
 from ai.app.perception import document_intelligence_pipeline
 
-UPLOAD_DIR = Path("uploads")
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 MAX_FILE_SIZE = 25 * 1024 * 1024  # 25MB limit
 
 
@@ -41,10 +40,10 @@ async def create_user_document(
     # Secure storage UUID filename
     doc_uuid = str(uuid.uuid4())
     stored_filename = f"{doc_uuid}{ext if ext else '.pdf'}"
-    file_path = UPLOAD_DIR / stored_filename
+    mime_type = file.content_type or "application/pdf"
 
-    with open(file_path, "wb") as f:
-        f.write(file_bytes)
+    # Persist file using Storage Service (Local or S3/R2)
+    await storage_service.save_file(file_bytes, stored_filename, mime_type)
 
     # Run AI perception pipeline
     ai_result_dict = None
@@ -78,7 +77,7 @@ async def create_user_document(
         owner_id=owner_id,
         original_filename=original_filename,
         stored_filename=stored_filename,
-        mime_type=file.content_type or "application/pdf",
+        mime_type=mime_type,
         file_size=len(file_bytes),
         document_type=document_type,
         requirement="REQUIRED",
@@ -122,15 +121,16 @@ async def get_document_by_id(
     return doc
 
 
-async def get_document_file_path(
+async def get_document_file_bytes(
     db: AsyncSession, document_id: str, current_user: User
-) -> tuple[Path, str, str] | None:
+) -> tuple[bytes, str, str] | None:
     doc = await get_document_by_id(db, document_id, current_user)
     if doc is None:
         return None
 
-    file_path = UPLOAD_DIR / doc.stored_filename
-    if not file_path.exists():
+    try:
+        file_bytes, content_type = await storage_service.get_file(doc.stored_filename)
+        return file_bytes, doc.original_filename, doc.mime_type or content_type
+    except Exception as exc:
+        print(f"Error reading document file '{doc.stored_filename}': {exc}")
         return None
-
-    return file_path, doc.original_filename, doc.mime_type

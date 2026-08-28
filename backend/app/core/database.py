@@ -8,10 +8,20 @@ from sqlalchemy.ext.asyncio import (
 
 from backend.app.core.config import settings
 
+db_url = settings.database_url
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif db_url.startswith("postgresql://") and not db_url.startswith("postgresql+"):
+    db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+
+engine_kwargs = {"pool_pre_ping": True}
+if not db_url.startswith("sqlite"):
+    engine_kwargs["pool_size"] = 10
+    engine_kwargs["max_overflow"] = 20
 
 engine = create_async_engine(
-    settings.database_url,
-    pool_pre_ping=True,
+    db_url,
+    **engine_kwargs,
 )
 
 AsyncSessionLocal = async_sessionmaker(
@@ -23,4 +33,4 @@ AsyncSessionLocal = async_sessionmaker(
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
-        yield session 
+        yield session

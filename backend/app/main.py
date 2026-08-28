@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, HTTPException, Request, status
@@ -23,13 +24,28 @@ from backend.app.core.config import settings
 from backend.app.core.database import engine
 from backend.app.models import Base
 
+logger = logging.getLogger("agenttrust.startup")
+logging.basicConfig(level=logging.INFO)
+
 
 @asynccontextmanager
 async def lifespan(application: FastAPI):
+    # Production Startup Validation (No secrets logged)
+    db_type = "SQLite" if settings.database_url.startswith("sqlite") else "PostgreSQL"
+    logger.info(f"AgentTrust OS Starting • Environment: {settings.app_env} • Database: {db_type}")
+    logger.info(f"Storage Provider: {settings.storage_provider} • YOLO Checkpoint: {settings.yolo_model_path}")
+
+    if settings.app_env == "production":
+        if settings.jwt_secret == "secret-key-1234567890" or len(settings.jwt_secret) < 32:
+            logger.warning("SECURITY WARNING: JWT_SECRET should be a strong 32+ character random string in production.")
+        if db_type == "SQLite":
+            logger.warning("DATABASE NOTICE: Running with SQLite in production; PostgreSQL recommended.")
+
     if settings.app_env == "development" and settings.database_url.startswith("sqlite"):
         async with engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
     yield
+
 
 app = FastAPI(
     title="AgentTrust OS",
@@ -38,14 +54,21 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+# Configure CORS dynamically from CORS_ORIGINS & FRONTEND_URL
+allowed_origins_set = {
+    origin.strip()
+    for origin in settings.cors_origins.split(",")
+    if origin.strip()
+}
+allowed_origins_set.add(settings.frontend_url)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list({settings.frontend_url, "http://localhost:5173", "http://127.0.0.1:5173"}),
+    allow_origins=list(allowed_origins_set),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 
 # Standard Error Format Handler matching contracts/schemas.md
@@ -88,6 +111,19 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 
 api_v1_router = APIRouter(prefix="/api/v1")
+
+
+@api_v1_router.get("/health")
+async def api_v1_health():
+    return {
+        "status": "healthy",
+        "service": "AgentTrust OS API",
+        "version": "1.0.0",
+        "environment": settings.app_env,
+        "storage": settings.storage_provider,
+    }
+
+
 api_v1_router.include_router(auth_router)
 api_v1_router.include_router(users_router)
 api_v1_router.include_router(financial_router)
@@ -105,7 +141,6 @@ api_v1_router.include_router(agents_router)
 
 app.include_router(api_v1_router)
 
-
 # Root-level fallback for backward compatibility
 app.include_router(auth_router)
 
@@ -114,6 +149,7 @@ app.include_router(auth_router)
 async def root():
     return {
         "message": "AgentTrust OS API is running",
+        "environment": settings.app_env,
     }
 
 
@@ -121,4 +157,5 @@ async def root():
 async def health_check():
     return {
         "status": "healthy",
+        "environment": settings.app_env,
     }
