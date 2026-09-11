@@ -143,10 +143,25 @@ class YOLOLayoutAnalyzer:
 
         tmp_path = None
         try:
-            suffix = os.path.splitext(file_name)[1] or ".png"
-            with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
-                tmp.write(file_bytes)
-                tmp_path = tmp.name
+            ext = os.path.splitext(file_name.lower())[1] or ".png"
+            if ext == ".pdf":
+                try:
+                    import fitz
+                    doc = fitz.open(stream=file_bytes, filetype="pdf")
+                    page = doc.load_page(0)
+                    pix = page.get_pixmap(dpi=150)
+                    with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                        pix.save(tmp.name)
+                        tmp_path = tmp.name
+                except Exception as pdf_err:
+                    print(f"PDF image rendering warning for YOLO: {pdf_err}")
+                    with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+                        tmp.write(file_bytes)
+                        tmp_path = tmp.name
+            else:
+                with tempfile.NamedTemporaryFile(suffix=ext, delete=False) as tmp:
+                    tmp.write(file_bytes)
+                    tmp_path = tmp.name
 
             results = yolo_instance.predict(
                 source=tmp_path,

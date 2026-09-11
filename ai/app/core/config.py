@@ -38,24 +38,33 @@ class AISettings:
         self.supported_languages: str = os.getenv("SUPPORTED_LANGUAGES", "en,hi")
 
         # Document Perception & Vision ML Configuration
+        import sys
+        default_py = sys.executable
         self.ocr_provider: str = os.getenv("OCR_PROVIDER", "paddleocr")
         self.ocr_enabled: bool = os.getenv("OCR_ENABLED", "true").lower() in ("true", "1", "yes")
-        self.ocr_python_executable: str = os.getenv("OCR_PYTHON_EXECUTABLE", "ocr-env/Scripts/python.exe")
+        self.ocr_python_executable: str = os.getenv("OCR_PYTHON_EXECUTABLE", default_py)
         self.ocr_version: str = os.getenv("OCR_VERSION", "PP-OCRv5")
         self.ocr_disable_pir: bool = os.getenv("OCR_DISABLE_PIR", "true").lower() in ("true", "1", "yes")
         self.ocr_enable_mkldnn: bool = os.getenv("OCR_ENABLE_MKLDNN", "false").lower() in ("true", "1", "yes")
         self.ocr_timeout_seconds: int = int(os.getenv("OCR_TIMEOUT_SECONDS", "300"))
         self.ocr_model: str = os.getenv("OCR_MODEL", "ch_PP-OCRv4_rec")
         self.ocr_use_angle_cls: bool = os.getenv("OCR_USE_ANGLE_CLS", "true").lower() in ("true", "1", "yes")
-        self.yolo_model_path: str = os.getenv(
-            "YOLO_MODEL_PATH",
-            "runs/detect/artifacts/training/doc_layout/real_yolo_002/train_run/weights/best.pt",
-        )
+        
+        env_yolo = os.getenv("YOLO_MODEL_PATH")
+        if env_yolo and os.path.exists(env_yolo):
+            self.yolo_model_path = env_yolo
+        elif os.path.exists("runs/detect/artifacts/training/doc_layout/real_yolo_002/train_run/weights/best.pt"):
+            self.yolo_model_path = "runs/detect/artifacts/training/doc_layout/real_yolo_002/train_run/weights/best.pt"
+        elif os.path.exists("yolov8n.pt"):
+            self.yolo_model_path = "yolov8n.pt"
+        else:
+            self.yolo_model_path = env_yolo or "yolov8n.pt"
+
         self.yolo_confidence_threshold: float = float(os.getenv("YOLO_CONFIDENCE_THRESHOLD", "0.25"))
         self.yolo_iou_threshold: float = float(os.getenv("YOLO_IOU_THRESHOLD", "0.45"))
         self.yolo_device: str = os.getenv("YOLO_DEVICE", "cpu")
         self.yolo_image_size: int = int(os.getenv("YOLO_IMAGE_SIZE", "640"))
-        self.document_max_size_bytes: int = int(os.getenv("DOCUMENT_MAX_SIZE", str(15 * 1024 * 1024)))
+        self.document_max_size_bytes: int = int(os.getenv("DOCUMENT_MAX_SIZE", str(25 * 1024 * 1024)))
         self.document_max_pages: int = int(os.getenv("DOCUMENT_MAX_PAGES", "20"))
 
         # Financial ML & Anomaly Detection Configuration (Phase 2B)
