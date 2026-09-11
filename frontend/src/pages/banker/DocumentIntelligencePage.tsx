@@ -96,8 +96,17 @@ export const DocumentIntelligencePage: React.FC = () => {
           </label>
 
           {analysisResult && (
-            <Badge variant={hasOcr ? "success" : "warning"} size="md">
-              {hasOcr ? `PaddleOCR Active (${ocrCount} Lines Extracted)` : "OCR Engine Active"}
+            <Badge
+              variant={
+                hasOcr && analysisResult.model_metadata?.ocr?.status !== 'MODEL_UNAVAILABLE'
+                  ? 'success'
+                  : 'warning'
+              }
+              size="md"
+            >
+              {hasOcr && analysisResult.model_metadata?.ocr?.status !== 'MODEL_UNAVAILABLE'
+                ? `🟢 AI / OCR Model Processed (${ocrCount} Lines Extracted)`
+                : '🟡 Fallback Extraction (Cloud GPU / OCR Service Offline)'}
             </Badge>
           )}
 

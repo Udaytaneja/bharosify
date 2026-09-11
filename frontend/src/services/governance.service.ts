@@ -23,7 +23,7 @@ export class GovernanceService {
     try {
       const res = await apiClient.get('/governance');
       if (res.data) {
-        return {
+        const serverConfig: GovernanceConfig = {
           dtiRatio: res.data.dti_ratio ?? res.data.dtiRatio ?? this.defaultConfig.dtiRatio,
           trustIndexCutoff: res.data.trust_index_cutoff ?? res.data.trustIndexCutoff ?? this.defaultConfig.trustIndexCutoff,
           rule1Active: res.data.rule1_active ?? res.data.rule1Active ?? this.defaultConfig.rule1Active,
@@ -31,9 +31,12 @@ export class GovernanceService {
           updatedAt: res.data.updated_at,
           updatedBy: res.data.updated_by,
         };
+        // BACKEND WINS: Overwrite local cache with authoritative server response
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(serverConfig));
+        return serverConfig;
       }
     } catch {
-      // Backend fallback to persistent local storage
+      // Offline fallback: Use local cache if backend connection fails
     }
 
     const saved = localStorage.getItem(STORAGE_KEY);
@@ -54,9 +57,6 @@ export class GovernanceService {
       updatedBy: user,
     };
 
-    // Save to persistent storage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-
     try {
       await apiClient.post('/governance', {
         dti_ratio: config.dtiRatio,
@@ -64,11 +64,15 @@ export class GovernanceService {
         rule1_active: config.rule1Active,
         rule2_active: config.rule2Active,
       });
+      // Update local storage only after successful API call
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       return {
         success: true,
         message: `Governance policy configuration successfully persisted & synced to production API.`,
       };
     } catch {
+      // Fallback local persistence if offline
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       return {
         success: true,
         message: `Governance policy configuration saved & signed locally by ${user} (Vault synced).`,
