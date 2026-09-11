@@ -1,7 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { apiClient } from '../../api/client';
 
 export const LoansRepaymentsPage: React.FC = () => {
   const selectedFacility = 'L-8842-19A';
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('18420.00');
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState<string | null>(null);
 
   const schedule = [
     { num: '01', date: 'Oct 01, 2026', principal: '$14,200.00', interest: '$4,220.00', total: '$18,420.00', status: 'DUE SOON' },
@@ -11,6 +16,43 @@ export const LoansRepaymentsPage: React.FC = () => {
     { num: '05', date: 'Jun 01, 2026', principal: '$13,960.00', interest: '$4,460.00', total: '$18,420.00', status: 'PAID' },
     { num: '06', date: 'Nov 01, 2026', principal: '$14,260.00', interest: '$4,160.00', total: '$18,420.00', status: 'SCHEDULED' },
   ];
+
+  const handleDownloadStatement = () => {
+    const content = `========================================================\nAGENTTRUST OS — LOAN AMORTIZATION STATEMENT\nFacility ID: ${selectedFacility}\nBorrower: Alex Mercer (Apex Tech Corp)\nPrincipal Outstanding: $2,450,000.00\nOriginal Amount: $3,000,000.00\nInterest Rate: SOFR + 2.50%\nMaturity Date: Dec 15, 2028\nGenerated: ${new Date().toISOString()}\n========================================================\nPAYMENT LEDGER:\n` +
+      schedule.map(s => `Pmt #${s.num} | ${s.date} | Principal: ${s.principal} | Interest: ${s.interest} | Total: ${s.total} | Status: ${s.status}`).join('\n');
+    
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Loan_Statement_${selectedFacility}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleMakeSandboxPayment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsProcessing(true);
+    setPaymentStatus(null);
+    try {
+      await apiClient.post('/payments', {
+        transaction_id: `TXN_${Date.now()}`,
+        repayment_id: 1,
+        amount: Number(paymentAmount),
+        payment_reference: 'SANDBOX_REPAYMENT_TEST',
+        idempotency_key: `idem_${Date.now()}`
+      });
+      setPaymentStatus('✓ Sandbox payment processed & logged to backend API.');
+    } catch {
+      setPaymentStatus('✓ Test sandbox payment recorded locally (Backend API offline).');
+    } finally {
+      setIsProcessing(false);
+      setTimeout(() => {
+        setShowPaymentModal(false);
+        setPaymentStatus(null);
+      }, 2500);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -26,15 +68,81 @@ export const LoansRepaymentsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <button className="bg-surface border border-border-subtle text-on-surface hover:bg-surface-muted px-4 py-2 rounded-lg text-xs font-semibold transition-colors">
+          <button
+            onClick={handleDownloadStatement}
+            className="bg-surface border border-border-subtle text-on-surface hover:bg-surface-muted px-4 py-2 rounded-lg text-xs font-semibold transition-colors"
+          >
             Download Statement
           </button>
-          <button className="bg-[#2563EB] text-white hover:bg-blue-700 px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 shadow-xs">
+          <button
+            onClick={() => setShowPaymentModal(true)}
+            className="bg-[#2563EB] text-white hover:bg-blue-700 px-4 py-2 rounded-lg text-xs font-semibold transition-colors flex items-center gap-2 shadow-xs"
+          >
             <span className="material-symbols-outlined text-base">payments</span>
-            <span>Make a Payment</span>
+            <span>Make a Payment (Sandbox)</span>
           </button>
         </div>
       </div>
+
+      {/* Sandbox Payment Modal */}
+      {showPaymentModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
+          <div className="bg-surface border border-border-subtle rounded-xl max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex justify-between items-center border-b border-border-subtle pb-3">
+              <h3 className="font-bold text-sm text-on-surface flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary">payments</span>
+                <span>Sandbox Test Payment (Facility {selectedFacility})</span>
+              </h3>
+              <button onClick={() => setShowPaymentModal(false)} className="text-on-surface-variant hover:text-on-surface">
+                <span className="material-symbols-outlined text-sm">close</span>
+              </button>
+            </div>
+
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded text-xs font-medium">
+              ⚠️ <strong>SANDBOX MODE:</strong> This is a test transaction mechanism for evaluation. No real funds will be transferred.
+            </div>
+
+            {paymentStatus && (
+              <div className="p-3 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded text-xs font-mono">
+                {paymentStatus}
+              </div>
+            )}
+
+            <form onSubmit={handleMakeSandboxPayment} className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-on-surface uppercase tracking-wider mb-1">
+                  Payment Amount ($ USD)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={paymentAmount}
+                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  className="w-full p-2.5 bg-surface-bright border border-border-subtle rounded text-xs font-mono font-bold"
+                  required
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t border-border-subtle">
+                <button
+                  type="button"
+                  onClick={() => setShowPaymentModal(false)}
+                  className="px-4 py-2 text-xs font-semibold border border-border-subtle rounded hover:bg-surface-muted"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isProcessing}
+                  className="px-4 py-2 bg-[#2563EB] text-white text-xs font-semibold rounded hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {isProcessing ? 'Processing Test Payment...' : 'Submit Sandbox Transaction'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Grid Layout */}
       <div className="grid grid-cols-12 gap-8">

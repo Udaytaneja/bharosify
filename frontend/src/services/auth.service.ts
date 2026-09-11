@@ -7,47 +7,34 @@ export class AuthService {
       const response = await apiClient.post('/auth/login', { email, password });
       const { access_token, refresh_token, user } = response.data;
 
-      localStorage.setItem('access_token', access_token);
-      localStorage.setItem('refresh_token', refresh_token);
+      if (access_token) {
+        localStorage.setItem('access_token', access_token);
+      }
+      if (refresh_token) {
+        localStorage.setItem('refresh_token', refresh_token);
+      }
 
-      const role: UserRole = user.role === 'banker' ? 'banker' : 'applicant';
+      const role: UserRole = user?.role === 'banker' ? 'banker' : 'applicant';
       const userProfile: UserProfile = {
-        id: String(user.id),
-        name: user.name || (role === 'banker' ? 'Vikram Singh' : 'Alex Mercer'),
+        id: String(user?.id || (role === 'banker' ? 'BKR-7749-NY' : 'APP-8942-NY')),
+        name: user?.name || (role === 'banker' ? 'Vikram Singh' : 'Alex Mercer'),
         role,
         title: role === 'banker' ? 'Lead Underwriter / Risk Officer' : 'CFO, Apex Tech Corp',
-        email: user.email,
+        email: user?.email || email,
         authLevel: role === 'banker' ? 'L3-AUTH' : undefined,
         accountStatus: 'VERIFIED',
       };
 
       localStorage.setItem('agenttrust_auth_user', JSON.stringify(userProfile));
       return { userProfile, tokens: response.data };
-    } catch (err) {
-      console.warn('Real API login fallback to mock:', err);
-      // Fallback mock profile for development when backend user is not seeded
-      const isBanker = email.includes('banker') || email.includes('vikram');
-      const fallbackRole: UserRole = isBanker ? 'banker' : 'applicant';
-      const fallbackProfile: UserProfile = isBanker
-        ? {
-            id: 'BKR-7749-NY',
-            name: 'Vikram Singh',
-            role: fallbackRole,
-            title: 'Lead Underwriter / Risk Officer',
-            email: email || 'vikram.singh@agenttrust.bank',
-            authLevel: 'L3-AUTH',
-          }
-        : {
-            id: 'APP-8942-NY',
-            name: 'Alex Mercer',
-            role: 'applicant',
-            title: 'CFO, Apex Tech Corp',
-            email: email || 'alex.mercer@apextech.com',
-            accountStatus: 'VERIFIED',
-          };
-
-      localStorage.setItem('agenttrust_auth_user', JSON.stringify(fallbackProfile));
-      return { userProfile: fallbackProfile, tokens: null };
+    } catch (err: any) {
+      console.error('Authentication Error:', err);
+      // Remove stale user token state
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      
+      const errorMsg = err.response?.data?.detail || err.response?.data?.error?.message || err.message || 'Authentication failed.';
+      throw new Error(typeof errorMsg === 'string' ? errorMsg : 'Authentication failed.');
     }
   }
 

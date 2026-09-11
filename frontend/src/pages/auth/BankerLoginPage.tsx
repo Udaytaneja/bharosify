@@ -8,11 +8,21 @@ export const BankerLoginPage: React.FC = () => {
   const [employeeId, setEmployeeId] = useState('BKR-7749-NY');
   const [password, setPassword] = useState('••••••••••••');
   const [tokenCode, setTokenCode] = useState('894 201');
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await loginAsBanker(employeeId, password);
-    navigate('/banker/dashboard');
+    setIsLoading(true);
+    setLoginError(null);
+    try {
+      await loginAsBanker(employeeId, password);
+      navigate('/banker/dashboard');
+    } catch (err: any) {
+      setLoginError(err.message || 'Authentication failed. Please check credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -32,6 +42,13 @@ export const BankerLoginPage: React.FC = () => {
             FIPS 140-3
           </span>
         </div>
+
+        {loginError && (
+          <div className="p-3 bg-rose-950/80 border border-rose-800 text-rose-300 rounded-md text-xs flex items-center gap-2">
+            <span className="material-symbols-outlined text-base text-rose-400">error</span>
+            <span>{loginError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -78,10 +95,20 @@ export const BankerLoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-[#2563EB] hover:bg-blue-600 text-white rounded-md font-medium text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
+            disabled={isLoading}
+            className="w-full py-2.5 bg-[#2563EB] hover:bg-blue-600 disabled:opacity-60 text-white rounded-md font-medium text-sm transition-colors flex items-center justify-center gap-2 shadow-sm"
           >
-            <span>Authenticate & Access Command Center</span>
-            <span className="material-symbols-outlined text-base">arrow_forward</span>
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Authenticating...</span>
+              </>
+            ) : (
+              <>
+                <span>Authenticate & Access Command Center</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </>
+            )}
           </button>
         </form>
 

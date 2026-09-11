@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Badge, Button } from '../../components/common/Primitives';
+import { GovernanceService } from '../../services/governance.service';
 
 export const GovernancePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'policy' | 'thresholds' | 'permissions' | 'gateways'>('policy');
@@ -7,15 +8,37 @@ export const GovernancePage: React.FC = () => {
   const [trustIndexCutoff, setTrustIndexCutoff] = useState(720);
   const [rule1Active, setRule1Active] = useState(true);
   const [rule2Active, setRule2Active] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
 
-  // Clean Service Abstraction for Config Persistence
-  const handleSaveConfig = () => {
-    setSaveStatus('Persisting governance policies to FIPS 140-3 Vault...');
-    setTimeout(() => {
-      setSaveStatus('Governance Configuration Saved & Signed by Vikram Singh (Lead Underwriter)');
-      setTimeout(() => setSaveStatus(null), 4000);
-    }, 1200);
+  useEffect(() => {
+    GovernanceService.getConfig().then((cfg) => {
+      if (cfg) {
+        setDtiRatio(cfg.dtiRatio);
+        setTrustIndexCutoff(cfg.trustIndexCutoff);
+        setRule1Active(cfg.rule1Active);
+        setRule2Active(cfg.rule2Active);
+      }
+    });
+  }, []);
+
+  const handleSaveConfig = async () => {
+    setIsSaving(true);
+    setSaveStatus(null);
+    try {
+      const res = await GovernanceService.saveConfig({
+        dtiRatio,
+        trustIndexCutoff,
+        rule1Active,
+        rule2Active,
+      });
+      setSaveStatus(res.message);
+      setTimeout(() => setSaveStatus(null), 5000);
+    } catch (err: any) {
+      setSaveStatus(`Error saving configuration: ${err.message || 'Save failed.'}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -38,8 +61,8 @@ export const GovernancePage: React.FC = () => {
           <Badge variant="success" size="md">
             Active Mode: Strict (Dual-Auth Enforced)
           </Badge>
-          <Button variant="primary" size="sm" onClick={handleSaveConfig} className="bg-[#2563EB]">
-            Save Configuration
+          <Button variant="primary" size="sm" disabled={isSaving} onClick={handleSaveConfig} className="bg-[#2563EB]">
+            {isSaving ? 'Saving...' : 'Save Configuration'}
           </Button>
         </div>
       </div>

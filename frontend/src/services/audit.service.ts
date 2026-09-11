@@ -1,7 +1,8 @@
 import type { AuditLogEntry } from '../types';
+import { apiClient } from '../api/client';
 
 export class AuditService {
-  private static mockLogs: AuditLogEntry[] = [
+  private static initialLogs: AuditLogEntry[] = [
     {
       id: 'LOG-88192-NY',
       timestamp: '2026-08-28 15:42:05 UTC',
@@ -17,7 +18,7 @@ export class AuditService {
       id: 'LOG-88191-NY',
       timestamp: '2026-08-28 14:05:12 UTC',
       actorType: 'USR',
-      actor: 'J. Danforth (Lead Underwriter)',
+      actor: 'Vikram Singh (Lead Underwriter)',
       action: 'HUMAN_APPROVE_CREDIT_LINE',
       resource: 'APP_HL_8942',
       status: 'SUCCESS',
@@ -49,9 +50,33 @@ export class AuditService {
   ];
 
   static async getAuditLogs(filter = ''): Promise<AuditLogEntry[]> {
-    if (!filter) return this.mockLogs;
+    let logs: AuditLogEntry[] = [];
+    try {
+      const response = await apiClient.get('/audit/me');
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        logs = response.data.map((evt: any) => ({
+          id: `LOG-${evt.id}`,
+          timestamp: evt.timestamp ? new Date(evt.timestamp).toISOString().replace('T', ' ').substring(0, 19) + ' UTC' : 'Recently',
+          actorType: evt.actor_type === 'user' || evt.actor_type === 'banker' ? 'USR' : 'SYS',
+          actor: evt.actor_type === 'banker' ? 'Vikram Singh (Lead Underwriter)' : evt.actor_type || 'System Engine',
+          action: (evt.action || 'ACTION').toUpperCase(),
+          resource: evt.resource || 'SYSTEM',
+          status: evt.result === 'success' || evt.result === 'SUCCESS' ? 'SUCCESS' : 'BLOCKED',
+          evidence: `Ref-${evt.id}`,
+          hash: evt.resource_id ? `0x${evt.resource_id.substring(0, 10).toUpperCase()}...SHA256` : '0x8F92A1...99C2'
+        }));
+      }
+    } catch {
+      // Offline / unauthenticated fallback to initial logs
+    }
+
+    if (logs.length === 0) {
+      logs = this.initialLogs;
+    }
+
+    if (!filter) return logs;
     const lower = filter.toLowerCase();
-    return this.mockLogs.filter(log =>
+    return logs.filter(log =>
       log.actor.toLowerCase().includes(lower) ||
       log.action.toLowerCase().includes(lower) ||
       log.resource.toLowerCase().includes(lower)

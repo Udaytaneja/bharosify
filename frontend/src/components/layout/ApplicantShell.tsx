@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -6,6 +6,7 @@ export const ApplicantShell: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -25,8 +26,18 @@ export const ApplicantShell: React.FC = () => {
 
   return (
     <div className="min-h-screen flex bg-background text-on-surface">
+      {/* Mobile Overlay */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-25 lg:hidden"
+        ></div>
+      )}
+
       {/* Sidebar for Applicant */}
-      <aside className="w-[260px] bg-surface border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-30">
+      <aside className={`w-[260px] bg-surface border-r border-border-subtle flex flex-col fixed inset-y-0 left-0 z-30 transition-transform duration-200 ${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
         {/* Brand Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-border-subtle">
           <div className="flex items-center gap-3">
@@ -38,6 +49,9 @@ export const ApplicantShell: React.FC = () => {
               <div className="text-[10px] text-on-surface-variant uppercase tracking-widest font-mono">Applicant Portal</div>
             </div>
           </div>
+          <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden p-1 text-on-surface-variant hover:text-on-surface">
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
         </div>
 
         {/* User Account Info */}
@@ -68,6 +82,7 @@ export const ApplicantShell: React.FC = () => {
               <NavLink
                 key={item.path}
                 to={item.path}
+                onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive: linkActive }) =>
                   `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${
                     linkActive || isActive
@@ -97,11 +112,17 @@ export const ApplicantShell: React.FC = () => {
       </aside>
 
       {/* Main Content Container */}
-      <div className="pl-[260px] flex-1 flex flex-col min-w-0">
+      <div className="lg:pl-[260px] flex-1 flex flex-col min-w-0 w-full">
         {/* Header */}
-        <header className="h-16 bg-surface border-b border-border-subtle px-8 flex items-center justify-between sticky top-0 z-20">
+        <header className="h-16 bg-surface border-b border-border-subtle px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-3">
-            <span className="text-xs font-medium text-on-surface-variant">Commercial Credit & Loan Governance</span>
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-md hover:bg-surface-muted text-on-surface-variant"
+            >
+              <span className="material-symbols-outlined text-xl">menu</span>
+            </button>
+            <span className="text-xs font-medium text-on-surface-variant hidden sm:inline">Commercial Credit & Loan Governance</span>
             <span className="text-emerald-700 bg-emerald-50 border border-emerald-200 text-[11px] font-medium px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
               Secure Session Active

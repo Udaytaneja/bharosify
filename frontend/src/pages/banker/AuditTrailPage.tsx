@@ -1,62 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AuditTrailLink, Badge } from '../../components/common/Primitives';
+import { AuditService } from '../../services/audit.service';
+import type { AuditLogEntry } from '../../types';
 
 export const AuditTrailPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [timeframe, setTimeframe] = useState('7d');
+  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const auditLogs = [
-    {
-      id: 'LOG-88192-NY',
-      timestamp: '2026-08-28 15:42:05 UTC',
-      actorType: 'SYS',
-      actor: 'Automated Guardrail Engine',
-      action: 'POLICY_ENFORCE',
-      resource: 'TXN_8849_LMT',
-      status: 'BLOCKED',
-      evidence: 'Audit-99A',
-      hash: '0x8F92A1...99C2'
-    },
-    {
-      id: 'LOG-88191-NY',
-      timestamp: '2026-08-28 14:05:12 UTC',
-      actorType: 'USR',
-      actor: 'J. Danforth (Lead Underwriter)',
-      action: 'HUMAN_APPROVE_CREDIT_LINE',
-      resource: 'APP_HL_8942',
-      status: 'SUCCESS',
-      evidence: 'View Log',
-      hash: '0x31B09F...441A'
-    },
-    {
-      id: 'LOG-88190-NY',
-      timestamp: '2026-08-28 11:15:30 UTC',
-      actorType: 'MGR',
-      actor: 'A. Chen (Risk Director)',
-      action: 'THRESHOLD_ADJUSTMENT',
-      resource: 'MDL_FRAUD_V4',
-      status: 'SUCCESS',
-      evidence: 'Diff-8B2',
-      hash: '0x7A9122...00DF'
-    },
-    {
-      id: 'LOG-88189-NY',
-      timestamp: '2026-08-28 08:00:00 UTC',
-      actorType: 'SYS',
-      actor: 'PaddleOCR Forensic Engine',
-      action: 'TAMPER_INDEX_COMPUTE',
-      resource: 'IRS_1040_2023.pdf',
-      status: 'SUCCESS',
-      evidence: 'Evidence-12C',
-      hash: '0x12C990...E88B'
-    }
-  ];
-
-  const filteredLogs = auditLogs.filter(log =>
-    log.actor.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    log.resource.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    setIsLoading(true);
+    AuditService.getAuditLogs(searchTerm).then((res) => {
+      setLogs(res);
+      setIsLoading(false);
+    });
+  }, [searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -150,7 +109,13 @@ export const AuditTrailPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-border-subtle text-sm">
-              {filteredLogs.map((log) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-xs text-on-surface-variant">
+                    Loading audit ledger entries...
+                  </td>
+                </tr>
+              ) : logs.map((log) => (
                 <tr key={log.id} className="hover:bg-surface-muted/40 transition-colors h-14">
                   <td className="px-6 py-3 font-mono text-xs text-on-surface-variant">{log.timestamp}</td>
                   <td className="px-4 py-3">

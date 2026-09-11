@@ -1,7 +1,28 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AIInsight, Badge, Button } from '../../components/common/Primitives';
+import { UnderwritingService } from '../../services/underwriting.service';
 
 export const DecisionSupportPage: React.FC = () => {
+  const navigate = useNavigate();
+  const [rationale, setRationale] = useState(
+    'Verified IRS tax transcript matches 1040 line items. DSCR 1.42x satisfies institutional commercial underwriting guidelines.'
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [decisionResult, setDecisionResult] = useState<{ decision: string; commitHash: string } | null>(null);
+
+  const handleDecision = async (decisionType: 'APPROVE' | 'REJECT') => {
+    setIsSubmitting(true);
+    try {
+      const res = await UnderwritingService.submitDecision('APP-2023-891A', decisionType, rationale);
+      setDecisionResult({ decision: decisionType, commitHash: res.commitHash });
+    } catch (err: any) {
+      alert(`Decision error: ${err.message || 'Failed to submit decision.'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -19,11 +40,31 @@ export const DecisionSupportPage: React.FC = () => {
           <Badge variant="success" size="md">
             Model Active: AgentTrust-v4.8
           </Badge>
-          <Button variant="secondary" size="sm" icon={<span className="material-symbols-outlined text-sm">tune</span>}>
+          <Button variant="secondary" size="sm" onClick={() => navigate('/banker/governance')} icon={<span className="material-symbols-outlined text-sm">tune</span>}>
             Configure Rules
           </Button>
         </div>
       </div>
+
+      {decisionResult && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-900 rounded-xl space-y-2 font-mono text-xs animate-fade-in">
+          <div className="flex items-center justify-between font-bold">
+            <span className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-base text-emerald-600">verified</span>
+              <span>DECISION RECORDED & COMMITTED TO IMMUTABLE LEDGER</span>
+            </span>
+            <span className="bg-emerald-900 text-emerald-100 px-2 py-0.5 rounded text-[10px] uppercase">{decisionResult.decision}</span>
+          </div>
+          <p className="text-emerald-800">
+            Cryptographic Commit Hash: <strong className="text-emerald-950 font-bold">{decisionResult.commitHash}</strong>
+          </p>
+          <div className="pt-2 flex gap-3 font-sans font-semibold">
+            <button onClick={() => navigate('/banker/audit-trail')} className="text-[#2563EB] hover:underline flex items-center gap-1">
+              View in Immutable Audit Trail →
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Top AI Evaluation Banner */}
       <AIInsight
@@ -110,18 +151,31 @@ export const DecisionSupportPage: React.FC = () => {
               </label>
               <textarea
                 rows={3}
-                defaultValue="Verified IRS tax transcript matches 1040 line items. DSCR 1.42x satisfies institutional commercial underwriting guidelines."
+                value={rationale}
+                onChange={(e) => setRationale(e.target.value)}
                 className="w-full p-3 bg-surface-bright border border-border-subtle rounded-md text-xs text-on-surface focus:outline-none focus:border-[#2563EB]"
               />
             </div>
           </div>
 
           <div className="flex items-center gap-3 pt-4 border-t border-border-subtle">
-            <Button variant="danger" size="sm" className="flex-1">
-              Reject / Request Info
+            <Button
+              variant="danger"
+              size="sm"
+              disabled={isSubmitting}
+              onClick={() => handleDecision('REJECT')}
+              className="flex-1"
+            >
+              {isSubmitting ? 'Processing...' : 'Reject / Request Info'}
             </Button>
-            <Button variant="primary" size="sm" className="flex-2 bg-[#2563EB]">
-              Approve Credit Line ($450,000)
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={isSubmitting}
+              onClick={() => handleDecision('APPROVE')}
+              className="flex-2 bg-[#2563EB]"
+            >
+              {isSubmitting ? 'Processing...' : 'Approve Credit Line ($450,000)'}
             </Button>
           </div>
         </div>

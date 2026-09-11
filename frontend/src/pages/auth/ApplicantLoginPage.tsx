@@ -8,11 +8,21 @@ export const ApplicantLoginPage: React.FC = () => {
   const [email, setEmail] = useState('alex.mercer@apextech.com');
   const [password, setPassword] = useState('••••••••••••');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await loginAsApplicant(email, password);
-    navigate('/applicant/dashboard');
+    setIsLoading(true);
+    setLoginError(null);
+    try {
+      await loginAsApplicant(email, password);
+      navigate('/applicant/dashboard');
+    } catch (err: any) {
+      setLoginError(err.message || 'Authentication failed. Please check credentials.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -32,6 +42,13 @@ export const ApplicantLoginPage: React.FC = () => {
             SSL 256-BIT
           </span>
         </div>
+
+        {loginError && (
+          <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 rounded-md text-xs flex items-center gap-2">
+            <span className="material-symbols-outlined text-base text-rose-600">error</span>
+            <span>{loginError}</span>
+          </div>
+        )}
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
@@ -74,10 +91,20 @@ export const ApplicantLoginPage: React.FC = () => {
 
           <button
             type="submit"
-            className="w-full py-2.5 bg-[#2563EB] hover:bg-blue-600 text-white rounded-md font-medium text-sm transition-colors flex items-center justify-center gap-2 shadow-xs"
+            disabled={isLoading}
+            className="w-full py-2.5 bg-[#2563EB] hover:bg-blue-600 disabled:opacity-60 text-white rounded-md font-medium text-sm transition-colors flex items-center justify-center gap-2 shadow-xs"
           >
-            <span>Sign In to Applicant Dashboard</span>
-            <span className="material-symbols-outlined text-base">arrow_forward</span>
+            {isLoading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span>Signing In...</span>
+              </>
+            ) : (
+              <>
+                <span>Sign In to Applicant Dashboard</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </>
+            )}
           </button>
         </form>
 

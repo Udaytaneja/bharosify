@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -6,6 +6,7 @@ export const BankerShell: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -29,8 +30,18 @@ export const BankerShell: React.FC = () => {
 
   return (
     <div className="min-h-screen flex bg-background text-on-surface">
-      {/* Fixed 280px Deep Slate Sidebar */}
-      <aside className="w-[280px] bg-[#0F172A] text-white flex flex-col fixed inset-y-0 left-0 z-30 border-r border-slate-800">
+      {/* Mobile Drawer Overlay */}
+      {mobileMenuOpen && (
+        <div
+          onClick={() => setMobileMenuOpen(false)}
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-25 lg:hidden"
+        ></div>
+      )}
+
+      {/* Deep Slate Sidebar */}
+      <aside className={`w-[280px] bg-[#0F172A] text-white flex flex-col fixed inset-y-0 left-0 z-30 border-r border-slate-800 transition-transform duration-200 ${
+        mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      }`}>
         {/* Brand Header */}
         <div className="h-16 px-6 flex items-center justify-between border-b border-slate-800">
           <div className="flex items-center gap-3">
@@ -42,7 +53,9 @@ export const BankerShell: React.FC = () => {
               <div className="text-[10px] text-slate-400 uppercase tracking-widest font-mono">Banker Portal</div>
             </div>
           </div>
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" title="System Operational"></span>
+          <button onClick={() => setMobileMenuOpen(false)} className="lg:hidden p-1 text-slate-400 hover:text-white">
+            <span className="material-symbols-outlined text-xl">close</span>
+          </button>
         </div>
 
         {/* System Role Indicator */}
@@ -72,6 +85,7 @@ export const BankerShell: React.FC = () => {
                   <NavLink
                     key={item.path}
                     to={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
                     className={({ isActive: linkActive }) =>
                       `flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all ${
                         linkActive || isActive
@@ -107,15 +121,21 @@ export const BankerShell: React.FC = () => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="pl-[280px] flex-1 flex flex-col min-w-0">
+      <div className="lg:pl-[280px] flex-1 flex flex-col min-w-0 w-full">
         {/* Top Navigation Bar */}
-        <header className="h-16 bg-surface border-b border-border-subtle px-8 flex items-center justify-between sticky top-0 z-20">
-          <div className="flex items-center gap-4">
-            <span className="text-xs text-on-surface-variant font-medium">Banker Command Workspace</span>
-            <span className="text-border-subtle">|</span>
-            <div className="flex items-center gap-2 bg-surface-muted px-3 py-1 rounded-full text-xs text-on-surface-variant">
+        <header className="h-16 bg-surface border-b border-border-subtle px-4 sm:px-8 flex items-center justify-between sticky top-0 z-20">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setMobileMenuOpen(true)}
+              className="lg:hidden p-2 rounded-md hover:bg-surface-muted text-on-surface-variant"
+            >
+              <span className="material-symbols-outlined text-xl">menu</span>
+            </button>
+            <span className="text-xs text-on-surface-variant font-medium hidden sm:inline">Banker Command Workspace</span>
+            <span className="text-border-subtle hidden sm:inline">|</span>
+            <div className="flex items-center gap-2 bg-surface-muted px-2.5 py-1 rounded-full text-xs text-on-surface-variant">
               <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>Audit Chain Active: 0x8F9...A3C</span>
+              <span className="font-mono text-[11px]">Audit Chain Active</span>
             </div>
           </div>
 
