@@ -42,11 +42,11 @@ class Settings(BaseSettings):
     )
 
     frontend_url: str = Field(
-        default="http://localhost:5173",
+        default="https://agenttrust-20.vercel.app",
         validation_alias="FRONTEND_URL",
     )
     cors_origins: str = Field(
-        default="http://localhost:5173,http://127.0.0.1:5173",
+        default="http://localhost:5173,http://127.0.0.1:5173,https://agenttrust-20.vercel.app",
         validation_alias="CORS_ORIGINS",
     )
 

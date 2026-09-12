@@ -1,12 +1,17 @@
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 
 const getApiBaseUrl = (): string => {
-  if (import.meta.env.VITE_API_BASE_URL) {
-    return import.meta.env.VITE_API_BASE_URL as string;
+  let url = import.meta.env.VITE_API_BASE_URL as string | undefined;
+  if (url && url.trim()) {
+    let cleaned = url.trim().replace(/\/$/, '');
+    if (cleaned.endsWith('/api/v1')) {
+      cleaned = cleaned.substring(0, cleaned.length - 7);
+    }
+    return cleaned;
   }
-  // In production browser environment when no env var is provided, fallback to relative path or Render production backend
+  // In production browser environment when no env var is provided, fallback to production backend URL
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return ''; // relative path `/api/v1` proxied via vercel rewrites or server
+    return 'https://bharosify-backend-2-0.onrender.com';
   }
   return 'http://127.0.0.1:8000';
 };
@@ -14,7 +19,7 @@ const getApiBaseUrl = (): string => {
 const API_BASE_URL = getApiBaseUrl();
 
 export const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL ? `${API_BASE_URL.replace(/\/$/, '')}/api/v1` : '/api/v1',
+  baseURL: `${API_BASE_URL.replace(/\/$/, '')}/api/v1`,
   timeout: Number(import.meta.env.VITE_REQUEST_TIMEOUT_MS) || 8000,
   headers: {
     'Content-Type': 'application/json',

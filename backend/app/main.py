@@ -28,12 +28,31 @@ logger = logging.getLogger("agenttrust.startup")
 logging.basicConfig(level=logging.INFO)
 
 
+def get_allowed_origins() -> list[str]:
+    raw_origins = set()
+    if settings.cors_origins:
+        for item in settings.cors_origins.split(","):
+            cleaned = item.strip().rstrip("/")
+            if cleaned:
+                raw_origins.add(cleaned)
+    if settings.frontend_url:
+        cleaned_frontend = settings.frontend_url.strip().rstrip("/")
+        if cleaned_frontend:
+            raw_origins.add(cleaned_frontend)
+    raw_origins.add("https://agenttrust-20.vercel.app")
+    return sorted(list(raw_origins))
+
+
 @asynccontextmanager
 async def lifespan(application: FastAPI):
     # Production Startup Validation (No secrets logged)
     db_type = "SQLite" if settings.database_url.startswith("sqlite") else "PostgreSQL"
     logger.info(f"AgentTrust OS Starting • Environment: {settings.app_env} • Database: {db_type}")
     logger.info(f"Storage Provider: {settings.storage_provider} • YOLO Checkpoint: {settings.yolo_model_path}")
+    allowed_origins = get_allowed_origins()
+    logger.info(f"Configured Frontend URL: {settings.frontend_url.strip().rstrip('/')}")
+    logger.info(f"CORS Allowed Origins Count: {len(allowed_origins)}")
+    logger.info(f"CORS contains Vercel origin (https://agenttrust-20.vercel.app): {'https://agenttrust-20.vercel.app' in allowed_origins}")
 
     if settings.app_env == "production":
         if settings.jwt_secret == "secret-key-1234567890" or len(settings.jwt_secret) < 32:
@@ -55,16 +74,9 @@ app = FastAPI(
 )
 
 # Configure CORS dynamically from CORS_ORIGINS & FRONTEND_URL
-allowed_origins_set = {
-    origin.strip()
-    for origin in settings.cors_origins.split(",")
-    if origin.strip()
-}
-allowed_origins_set.add(settings.frontend_url)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=list(allowed_origins_set),
+    allow_origins=get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
